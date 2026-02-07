@@ -1,0 +1,59 @@
+#Установка порта
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      # Говорится, что используется discovery
+      discovery:
+        locator:
+          enabled: true
+      # Настройка route(маршруты)
+      routes:
+        - id: main_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/admin/categories/**, /categories/**
+
+        - id: compilations_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/admin/compilations/**, /compilations/**
+
+        - id: events_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/admin/events/**, /users/*/events/**, /events/**
+
+        - id: rating_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/events/*/rating
+
+        - id: requests_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/users/*/requests/**
+
+        - id: users_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/admin/users/**
+
+        - id: actuator_route
+          uri: http://localhost:8080
+          predicates:
+            - Path=/actuator/**
+
+#Подключаем все эндпоинты Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+
