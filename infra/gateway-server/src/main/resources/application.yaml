@@ -12,8 +12,11 @@ spring:
         serviceId: config-server
       fail-fast: true
       retry:
-        useRandomPolicy: true
-        max-interval: 6000
+        # повторное подключение
+        max-attempts: 15
+        initial-interval: 2000
+        max-interval: 10000
+        multiplier: 1.5
 
 #Регистрация в Eureka
 eureka:
@@ -28,5 +31,3 @@ eureka:
     leaseRenewalIntervalInSeconds: 10
     #   время ожидания сигнала eureka, если сигнал о работоспособности не постает, прежде чем Eureka его отключит
     leaseExpirationDurationInSeconds: 30
-      # не сразу регистрироваться в eureka
-    initialStatusReplicationDelayInSeconds: 10
