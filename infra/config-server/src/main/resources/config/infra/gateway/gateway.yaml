@@ -10,8 +10,20 @@ spring:
       discovery:
         locator:
           enabled: true
-      # Настройка route(маршруты)
+      defaultFilters:
+        - name: Retry
+          args:
+            retries: 3
+            series: SERVER_ERROR
+            statuses: BAD_GATEWAY, SERVICE_UNAVAILABLE, NOT_FOUND
+            methods: GET, POST, PATCH, DELETE
+            backoff:
+              firstBackoff: 50ms
+              maxBackoff: 500ms
+              factor: 2
+              basedOnPreviousValue: true
 
+      # Настройка route(маршруты)
       routes:
         - id: main_service_route
           uri: lb://main-service
