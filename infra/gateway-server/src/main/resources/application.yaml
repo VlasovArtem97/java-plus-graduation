@@ -28,3 +28,5 @@ eureka:
     leaseRenewalIntervalInSeconds: 10
     #   время ожидания сигнала eureka, если сигнал о работоспособности не постает, прежде чем Eureka его отключит
     leaseExpirationDurationInSeconds: 30
+      # не сразу регистрироваться в eureka
+    initialStatusReplicationDelayInSeconds: 2
