@@ -33,7 +33,7 @@ public class StatsClientImpl implements StatsClient {
     private final RestClient restClient;
     private static final String PATH_HIT = "/hit";
     private static final String PATH_STATS = "/stats";
-    //добавил
+
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public StatsClientImpl(DiscoveryClient discoveryClient,
@@ -54,9 +54,6 @@ public class StatsClientImpl implements StatsClient {
         retryTemplate.setRetryPolicy(retryPolicy);
 
         this.restClient = restClient.build();
-//        this.restClient = restClient
-//                .baseUrl(makeUri().toString())
-//                .build();
     }
 
     @Override

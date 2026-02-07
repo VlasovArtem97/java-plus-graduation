@@ -7,13 +7,13 @@ spring:
   application:
     name: config-server
   profiles:
-#Указываем, что поиск конфигурационных файлов будет происходить в локальных файлах
+    #Указываем, что поиск конфигурационных файлов будет происходить в локальных файлах
     active: native
   cloud:
     config:
       server:
         native:
-#Путь к локальным файлам конфигураций
+          #Путь к локальным файлам конфигураций
           searchLocations:
             - classpath:config/core/mainservice
             - classpath:config/stats/statsserver
@@ -23,13 +23,15 @@ spring:
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://${eureka.instance.hostname:localhost}:${eureka.instance.port:8761}/eureka/
-#Указываем, как будет происходить регистрация в eureka
+      defaultZone: http://localhost:8761/eureka/
+  #  Указываем, как будет происходить регистрация в eureka
   instance:
     preferIpAddress: true
-#    hostname: localhost
     instance-id: "${spring.application.name}:${random.value}"
+    #   периодичность подачи сигнала о работоспособности в eureka
     leaseRenewalIntervalInSeconds: 10
+    #   время ожидания сигнала eureka, если сигнал о работоспособности не постает, прежде чем Eureka его отключит
+    leaseExpirationDurationInSeconds: 30
 
 #Уровень логирования
 logging:

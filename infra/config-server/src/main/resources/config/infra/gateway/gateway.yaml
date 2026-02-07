@@ -6,10 +6,12 @@ spring:
   cloud:
     gateway:
       # Говорится, что используется discovery
+      # Можно было бы записать все пути под один маршрут, но решил разбить (пока что)
       discovery:
         locator:
           enabled: true
       # Настройка route(маршруты)
+
       routes:
         - id: main_service_route
           uri: lb://main-service
@@ -40,11 +42,6 @@ spring:
           uri: lb://main-service
           predicates:
             - Path=/admin/users/**
-
-        - id: actuator_route
-          uri: http://localhost:8080
-          predicates:
-            - Path=/actuator/**
 
 #Подключаем все эндпоинты Actuator
 management:

@@ -112,6 +112,7 @@
 
     <build>
         <plugins>
+            <!--            перезаписал компилятор для того, чтобы добавить querydsl-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
