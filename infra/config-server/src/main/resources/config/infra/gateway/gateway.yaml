@@ -28,36 +28,32 @@ spring:
         - id: main_service_route
           uri: lb://main-service
           predicates:
-            - Path=/**
-#        - id: main_service_route
-#          uri: lb://main-service
-#          predicates:
-#            - Path=/admin/categories/**, /categories/**
-#
-#        - id: compilations_service_route
-#          uri: lb://main-service
-#          predicates:
-#            - Path=/admin/compilations/**, /compilations/**
-#
-#        - id: events_service_route
-#          uri: lb://main-service
-#          predicates:
-#            - Path=/admin/events/**, /users/*/events/**, /events/**
-#
-#        - id: rating_service_route
-#          uri: lb://main-service
-#          predicates:
-#            - Path=/events/*/rating
-#
-#        - id: requests_service_route
-#          uri: lb://main-service
-#          predicates:
-#            - Path=/users/*/requests/**
-#
-#        - id: users_service_route
-#          uri: lb://main-service
-#          predicates:
-#            - Path=/admin/users/**
+            - Path=/admin/categories/**, /categories/**
+
+        - id: compilations_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/admin/compilations/**, /compilations/**
+
+        - id: events_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/admin/events/**, /users/{userId}/events/**, /events/**
+
+        - id: rating_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/events/{eventId}/rating, /users/{userId}/events/{eventId}/rating
+
+        - id: requests_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/users/{userId}/requests/**
+
+        - id: users_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/admin/users/**
 
 #Подключаем все эндпоинты Actuator
 management:
