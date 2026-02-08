@@ -15,9 +15,9 @@ spring:
         native:
           #Путь к локальным файлам конфигураций
           searchLocations:
-            - classpath:config/core/{application}
-            - classpath:config/infra/{application}
-            - classpath:config/stats/{application}
+            - classpath:config/core/main-service
+            - classpath:config/stats/stats-server
+            - classpath:config/infra/gateway-server
 
 #Регистрируемся в eureka
 eureka:

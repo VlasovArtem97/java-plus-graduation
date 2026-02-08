@@ -1,0 +1,70 @@
+#Установка порта
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      # Говорится, что используется discovery
+      discovery:
+        locator:
+          enabled: true
+      defaultFilters:
+        - name: Retry
+          args:
+            retries: 3
+            series: SERVER_ERROR
+            statuses: BAD_GATEWAY, SERVICE_UNAVAILABLE, NOT_FOUND
+            methods: GET, PATCH, DELETE
+            backoff:
+              firstBackoff: 50ms
+              maxBackoff: 500ms
+              factor: 2
+              basedOnPreviousValue: true
+
+      # Настройка route(маршруты)
+      routes:
+        - id: main_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/admin/categories/**, /categories/**
+
+        - id: compilations_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/admin/compilations/**, /compilations/**
+
+        - id: events_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/admin/events/**, /users/{userId}/events/**, /events/**
+
+        - id: rating_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/events/{eventId}/rating, /users/{userId}/events/{eventId}/rating
+
+        - id: requests_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/users/{userId}/requests/**
+
+        - id: users_service_route
+          uri: lb://main-service
+          predicates:
+            - Path=/admin/users/**
+
+#Подключаем все эндпоинты Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    gateway:
+      enabled: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+
