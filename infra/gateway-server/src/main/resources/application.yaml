@@ -1,7 +1,7 @@
 # Название приложения
 spring:
   application:
-    name: gateway
+    name: gateway-server
   # Получаем настройки из Config-server используя Eureka
   config:
     import: "configserver:"

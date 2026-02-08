@@ -25,6 +25,10 @@ spring:
 
       # Настройка route(маршруты)
       routes:
+        - id: main_service_route
+          uri: lb://main-service
+          predicates:
+           - Path=/**
 #        - id: main_service_route
 #          uri: lb://main-service
 #          predicates:
