@@ -1,0 +1,14 @@
+package ru.yandex.discovery;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+
+@SpringBootApplication
+@EnableEurekaServer
+public class DiscoveryApp {
+
+    public static void main(String[] arg) {
+        SpringApplication.run(DiscoveryApp.class, arg);
+    }
+}

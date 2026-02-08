@@ -1,0 +1,37 @@
+# указываем порт
+server:
+  port: 0
+
+# подключение к базе данных
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:6543/stat-server
+    username: stat
+    password: stat
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# Уровень логирования
+logging:
+  level:
+    org.springframework.orm.jpa: INFO
+    org.springframework.transaction: INFO
+    org.springframework.transaction.interceptor: TRACE
+    org.springframework.orm.jpa.JpaTransactionManager: DEBUG
+    org.zalando.logbook: TRACE
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+#Указываем конкретные эндпоинты Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics

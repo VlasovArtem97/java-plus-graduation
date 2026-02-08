@@ -1,0 +1,47 @@
+# указываем порт
+server:
+  port: 8888
+
+#Задаем имя приложению
+spring:
+  application:
+    name: config-server
+  profiles:
+    #Указываем, что поиск конфигурационных файлов будет происходить в локальных файлах
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          #Путь к локальным файлам конфигураций
+          searchLocations:
+            - classpath:config/core/mainservice
+            - classpath:config/stats/statsserver
+            - classpath:config/infra/gateway
+
+#Регистрируемся в eureka
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  #  Указываем, как будет происходить регистрация в eureka
+  instance:
+    preferIpAddress: true
+    hostname: localhost
+    instance-id: "${spring.application.name}:${random.value}"
+    #   периодичность подачи сигнала о работоспособности в eureka
+    leaseRenewalIntervalInSeconds: 10
+    #   время ожидания сигнала eureka, если сигнал о работоспособности не постает, прежде чем Eureka его отключит
+    leaseExpirationDurationInSeconds: 30
+
+#Уровень логирования
+logging:
+  level:
+    org.springframework.cloud.config.server: DEBUG
+
+#Указываем конкретные эндпоинты Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics

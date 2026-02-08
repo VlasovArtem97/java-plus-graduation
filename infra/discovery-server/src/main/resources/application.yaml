@@ -1,0 +1,30 @@
+#Порт
+server:
+  port: 8761
+
+#Задаем имя приложению
+spring:
+  application:
+    name: discovery
+
+#Регистистрация Eureka-сервира
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    registerWithEureka: false
+    fetchRegistry: false
+    serviceUrl:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+
+#Уровень логирования
+logging:
+  level:
+    org.springframework.cloud.netflix.eureka: DEBUG
+
+#Подключаем все эндпоинты Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
