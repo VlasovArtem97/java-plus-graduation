@@ -4,7 +4,7 @@ spring:
     name: stats-server
   # Получаем настройки из Config-server используя Eureka
   config:
-    import: "optional:configserver:"
+    import: "configserver:"
   cloud:
     config:
       discovery:
@@ -23,6 +23,7 @@ eureka:
     #Указываем, как будет происходить регистрация в eureka
   instance:
     preferIpAddress: true
+    hostname: localhost
     instance-id: "${spring.application.name}:${random.value}"
     #   периодичность подачи сигнала о работоспособности в eureka
     leaseRenewalIntervalInSeconds: 10
