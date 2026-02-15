@@ -25,6 +25,6 @@ public interface RequestFeignClient {
                            @NotEmpty @RequestBody List<RequestDTO> requestList);
 
     @GetMapping("/{userId}/requests/{eventId}")
-    List<RequestDTO> findRequestByEventId(@Positive @NotNull @PathVariable("eventId") Long userId,
+    List<RequestDTO> findRequestByEventId(@Positive @NotNull @PathVariable("userId") Long userId,
                                           @Positive @NotNull @PathVariable("eventId") Long eventId);
 }

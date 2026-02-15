@@ -40,7 +40,7 @@ public class RequestServiceImpl implements RequestService {
         UserDto user = userFeignClient.findUserById(userId);
         EventFullDto event = eventFeignClient.findEventByIdForFeign(eventId);
 
-        if (requestRepository.existsByRequesterIdAndEventIdIn(userId, List.of(eventId)))
+        if (requestRepository.existsByRequesterIdInAndEventIdIn(List.of(userId), List.of(eventId)))
             throw new ConflictException("Данный запрос существует.");
 
         if (user.getId().equals(event.getInitiator()))
@@ -133,20 +133,24 @@ public class RequestServiceImpl implements RequestService {
         log.info("Получен запрос на сохранения обновленных статусов Request's: {}", requestList);
 
         //Проверяем на всякий случай, что такие Request существуют
-        Set<Long> requestIds = requestList.stream()
-                .map(RequestDTO::getId)
+        Set<Long> eventsId = requestList.stream()
+                .map(RequestDTO::getEventId)
                 .collect(Collectors.toSet());
 
-        if(requestRepository.existsByRequesterIdAndEventIdIn(userId, requestIds)) {
+        Set<Long> requesterIds = requestList.stream()
+                .map(RequestDTO::getRequesterId)
+                .collect(Collectors.toSet());
+
+        if(requestRepository.existsByRequesterIdInAndEventIdIn(requesterIds, eventsId)) {
             List<Request> requestDTOList = requestList.stream()
                     .map(requestMapper::toRequest)
                     .toList();
             List<Request> updateStatusRequest = requestRepository.saveAll(requestDTOList);
             log.debug("Обновленный объекты: {}", updateStatusRequest);
         } else {
-            log.error("В переданном списке, есть Request которых не существуют. RequestIds: {}", requestIds);
-            throw new ConflictException("В переданном списке, есть Request которых не существуют. RequestIds: " +
-                    requestIds);
+            log.error("В переданном списке, есть Request c eventId которых не существуют. EventIds: {}", eventsId);
+            throw new ConflictException("В переданном списке, есть Request c eventId которых не существуют. EventIds: " +
+                    eventsId);
         }
     }
 
