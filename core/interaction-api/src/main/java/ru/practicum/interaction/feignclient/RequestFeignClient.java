@@ -21,7 +21,7 @@ public interface RequestFeignClient {
 
     @PatchMapping("/{userId}/requests/updateRequests")
     void updateRequestList(@Positive @NotNull @PathVariable("userId") Long userId,
-                           @NotEmpty @RequestBody List<RequestDTO> requestList);
+                           @NotEmpty @RequestBody List<@NotNull RequestDTO> requestList);
 
     @GetMapping("/{userId}/requests/{eventId}")
     List<RequestDTO> findRequestByEventId(@Positive @NotNull @PathVariable("userId") Long userId,

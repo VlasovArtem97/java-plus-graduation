@@ -39,6 +39,8 @@ public class RequestServiceImpl implements RequestService {
         UserDto user = userFeignClient.findUserById(userId);
         EventFullDto event = eventFeignClient.findEventByIdForFeign(eventId);
 
+        Long confirmedRequests = event.getConfirmedRequests();
+
         if (requestRepository.existsByRequesterIdInAndEventIdIn(List.of(userId), List.of(eventId)))
             throw new ConflictException("Данный запрос существует.");
 
@@ -59,15 +61,21 @@ public class RequestServiceImpl implements RequestService {
 
         if (!event.getRequestModeration()) {
             request.setRequestStatus(RequestStatus.CONFIRMED);
-            event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+            confirmedRequests ++;
         } else {
             if (event.getParticipantLimit() == 0) {
                 request.setRequestStatus(RequestStatus.CONFIRMED);
-                event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+                confirmedRequests ++;
             } else {
                 request.setRequestStatus(RequestStatus.PENDING);
             }
         }
+        //Если есть одобренные заявки отправляем в event на сохранения новых данных
+        if(!event.getConfirmedRequests().equals(confirmedRequests)) {
+            event.setConfirmedRequests(confirmedRequests);
+            eventFeignClient.updateConfirmedRequestsFromFeign(eventId, event);
+        }
+
         return requestMapper.toRequestDTO(requestRepository.save(request));
     }
 
@@ -125,6 +133,7 @@ public class RequestServiceImpl implements RequestService {
         return requestDTOList;
     }
 
+    @Transactional
     @Override
     public void saveRequestList(Long userId, List<RequestDTO> requestList) {
         log.info("Получен запрос на сохранения обновленных статусов Request's: {}", requestList);

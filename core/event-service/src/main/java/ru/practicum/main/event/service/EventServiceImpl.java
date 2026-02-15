@@ -250,9 +250,28 @@ public class EventServiceImpl implements EventService {
         }
     }
 
+    @Transactional
     @Override
     public void saveEventWithRequest(Event event) {
         eventRepository.save(event);
+    }
+
+    @Transactional
+    @Override
+    public void updateConfirmedRequestsFromFeign(Long eventId, EventFullDto eventFullDto) {
+        log.info("Получен запрос на обновление статуса через feign client. Id event: {}. Event: {}",
+                eventId, eventFullDto);
+        Event event = findEventById(eventId);
+        //проверяем в полученном dto поле ConfirmedRequests
+        if(eventFullDto.getConfirmedRequests() == null || eventFullDto.getConfirmedRequests() < 0 ||
+                eventFullDto.getConfirmedRequests() > event.getParticipantLimit()) {
+            log.error("В переданном объекте некорректно передано поле \"ConfirmedRequests\". {}", eventFullDto);
+            throw new ConflictException("В переданном объекте некорректно передано поле \"ConfirmedRequests\". " +
+                    eventFullDto);
+        }
+        event.setConfirmedRequests(eventFullDto.getConfirmedRequests());
+        EventFullDto eventUpdate = eventMapper.toEventFullDto(eventRepository.save(event));
+        log.debug("Сохраненный объект: {}", eventUpdate);
     }
 
     //Добавил в параметры: время и уникальность. "Если проект будет расширяться"

@@ -34,4 +34,5 @@ public interface EventService {
 
     EventFullDto findEventByIdForFeign(Long eventId);
 
+    void updateConfirmedRequestsFromFeign(Long eventId, EventFullDto eventFullDto);
 }

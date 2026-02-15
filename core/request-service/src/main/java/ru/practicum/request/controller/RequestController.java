@@ -53,7 +53,7 @@ public class RequestController {
 
     @PatchMapping("/updateRequests")
     public void updateRequestList(@Positive @NotNull @PathVariable("userId") Long userId,
-                                  @NotEmpty @RequestBody List<RequestDTO> requestList) {
+                                  @NotEmpty @RequestBody List<@NotNull RequestDTO> requestList) {
         requestService.saveRequestList(userId, requestList);
     }
 
