@@ -30,7 +30,6 @@
             <artifactId>spring-cloud-commons</artifactId>
         </dependency>
 
-        <!--        Повторные попытки подключения к серверу статистики-->
         <dependency>
             <groupId>org.springframework.retry</groupId>
             <artifactId>spring-retry</artifactId>

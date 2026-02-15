@@ -69,7 +69,6 @@ public class StatsClientImpl implements StatsClient {
     private ResponseEntity<Void> post(String uri, Object body) {
         return restClient
                 .post()
-//                .uri(uri)
                 .uri(makeUri() + uri)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)

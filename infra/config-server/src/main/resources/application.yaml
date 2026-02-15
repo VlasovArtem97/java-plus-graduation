@@ -15,7 +15,10 @@ spring:
         native:
           #Путь к локальным файлам конфигураций
           searchLocations:
-            - classpath:config/core/main-service
+            - classpath:config/core/event-service
+            - classpath:config/core/user-service
+            - classpath:config/core/request-service
+            - classpath:config/core/rating-service
             - classpath:config/stats/stats-server
             - classpath:config/infra/gateway-server
 

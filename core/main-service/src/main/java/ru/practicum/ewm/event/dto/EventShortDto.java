@@ -20,7 +20,8 @@ public class EventShortDto {
     private CategoryDto category;
     private Long confirmedRequests;
     private LocalDateTime eventDate;
-    private UserShortDto initiator;
+//    private UserShortDto initiator;
+    private Long initiator;
     private Boolean paid;
     private String title;
     private Long views;
