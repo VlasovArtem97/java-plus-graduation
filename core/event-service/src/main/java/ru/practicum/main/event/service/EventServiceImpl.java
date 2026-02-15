@@ -263,8 +263,7 @@ public class EventServiceImpl implements EventService {
                 eventId, eventFullDto);
         Event event = findEventById(eventId);
         //проверяем в полученном dto поле ConfirmedRequests
-        if(eventFullDto.getConfirmedRequests() == null || eventFullDto.getConfirmedRequests() < 0 ||
-                eventFullDto.getConfirmedRequests() > event.getParticipantLimit()) {
+        if(eventFullDto.getConfirmedRequests() == null || eventFullDto.getConfirmedRequests() < 0) {
             log.error("В переданном объекте некорректно передано поле \"ConfirmedRequests\". {}", eventFullDto);
             throw new ConflictException("В переданном объекте некорректно передано поле \"ConfirmedRequests\". " +
                     eventFullDto);
