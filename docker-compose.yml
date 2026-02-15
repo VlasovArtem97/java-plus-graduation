@@ -51,14 +51,14 @@ services:
                    "core_rating_service")
         
         for db in "$${databases[@]}"; do
-         echo "Checking database: $$db"
+         echo "Проверка на наличия базы данных: $$db"
          exists=$$(psql -h ewm-db -U ewm -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$$db'")
 
          if [ "$$exists" != "1" ]; then
-          echo "Creating database: $$db"
+          echo "База данных создана: $$db"
           psql -h ewm-db -U ewm -d postgres -c "CREATE DATABASE $$db;"
          else
-          echo "Database $$db already exists. Skipping."
+          echo "База данных $$db уже существует."
          fi
         done
-        echo "All extra databases initialized."
+        echo "Базы данных инициализированы"

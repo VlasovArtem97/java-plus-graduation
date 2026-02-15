@@ -1,9 +1,6 @@
 package ru.practicum.main.event.service;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import org.springframework.web.bind.annotation.PathVariable;
 import ru.practicum.interaction.dto.event.*;
 import ru.practicum.main.event.model.Event;
 

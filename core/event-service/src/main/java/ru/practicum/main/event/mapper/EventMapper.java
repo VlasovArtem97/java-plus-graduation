@@ -16,29 +16,30 @@ import java.time.LocalDateTime;
 @Mapper(componentModel = "spring")
 public interface EventMapper {
 
-    @BeanMapping(qualifiedByName = "event")
     @Mapping(target = "id", ignore = true)
     @Mapping(source = "user.id", target = "initiator")
     @Mapping(source = "category", target = "category")
     @Mapping(source = "location", target = "location")
-    Event toEvent(NewEventDto newEventDto, /* User */UserDto user, Category category, Location location);
-
-
-    @Named("event")
-    @AfterMapping
-    default void setDefaultCreatedOn(@MappingTarget Event.EventBuilder event) {
-        event.createdOn(LocalDateTime.now());
-        event.state(StateEvent.PENDING);
-        event.confirmedRequests(0L);
-        event.views(0L);
-//        event.rating(0L);
-    }
+    @Mapping(target = "createdOn", expression = "java(java.time.LocalDateTime.now())")
+    @Mapping(target = "state", expression = "java(StateEvent.PENDING)")
+    @Mapping(target = "confirmedRequests", constant = "0L")
+    @Mapping(target = "views", constant = "0L")
+    Event toEvent(NewEventDto newEventDto, UserDto user, Category category, Location location);
 
     EventFullDto toEventFullDto(Event event);
 
     EventShortDto toEventShortDto(Event event);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, qualifiedByName = "updateEvent")
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "confirmedRequests", ignore = true)
+    @Mapping(target = "createdOn", ignore = true)
+    @Mapping(target = "initiator", ignore = true)
+    @Mapping(target = "publishedOn", ignore = true)
+    @Mapping(target = "state", ignore = true)
+    @Mapping(target = "views", ignore = true)
+    @Mapping(target = "compilations", ignore = true)
+    @Mapping(target = "location.id", ignore = true)
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void toUpdateEvent(UpdateEventUserRequest updateEventUserRequest, @MappingTarget Event event);
 }

@@ -12,5 +12,5 @@ import ru.practicum.interaction.dto.event.EventFullDto;
 public interface EventFeignClient {
 
     @GetMapping("/findEvent/{eventId}")
-    EventFullDto findEventByIdForFeign(@PathVariable @Positive @NotNull Long eventId);
+    EventFullDto findEventByIdForFeign(@PathVariable("eventId") @Positive @NotNull Long eventId);
 }

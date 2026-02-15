@@ -19,11 +19,9 @@ public class EventRating {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @Column(name = "event_id", nullable = false)
     private Long event;
 
-//    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @Column(name = "user_id", nullable = false)
     private Long user;
 

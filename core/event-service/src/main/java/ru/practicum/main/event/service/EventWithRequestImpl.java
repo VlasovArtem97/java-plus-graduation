@@ -12,7 +12,6 @@ import ru.practicum.interaction.feignclient.RequestFeignClient;
 import ru.practicum.interaction.feignclient.UserFeignClient;
 import ru.practicum.main.event.model.Event;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

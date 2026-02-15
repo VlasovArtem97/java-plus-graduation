@@ -13,7 +13,6 @@ import ru.practicum.interaction.utill.PageRequestUtil;
 import ru.practicum.main.compilations.mapper.CompilationMapper;
 import ru.practicum.main.compilations.model.Compilation;
 import ru.practicum.main.compilations.repository.CompilationRepository;
-import ru.practicum.main.event.mapper.EventMapper;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.service.EventService;
 
@@ -26,14 +25,12 @@ public class CompilationServiceImpl implements CompilationService {
 
     private final CompilationRepository compilationRepository;
     private final EventService eventService;
-    private final EventMapper eventMapper;
     private final CompilationMapper compilationMapper;
 
     @Autowired
-    public CompilationServiceImpl(CompilationRepository compilationRepository, EventService eventService, EventMapper eventMapper, CompilationMapper compilationMapper) {
+    public CompilationServiceImpl(CompilationRepository compilationRepository, EventService eventService, CompilationMapper compilationMapper) {
         this.compilationRepository = compilationRepository;
         this.eventService = eventService;
-        this.eventMapper = eventMapper;
         this.compilationMapper = compilationMapper;
     }
 

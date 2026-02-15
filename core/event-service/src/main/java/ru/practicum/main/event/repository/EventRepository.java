@@ -15,7 +15,6 @@ import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.model.QEvent;
 import ru.practicum.main.event.model.status.StateEvent;
 
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;

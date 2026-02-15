@@ -4,14 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.main.category.mapper.CategoryMapper;
-import ru.practicum.main.category.model.Category;
-import ru.practicum.main.category.repo.CategoryRepository;
 import ru.practicum.interaction.dto.category.CategoryDto;
 import ru.practicum.interaction.dto.category.NewCategoryDto;
 import ru.practicum.interaction.error.ConflictException;
 import ru.practicum.interaction.error.NotFoundException;
 import ru.practicum.interaction.utill.PageRequestUtil;
+import ru.practicum.main.category.mapper.CategoryMapper;
+import ru.practicum.main.category.model.Category;
+import ru.practicum.main.category.repo.CategoryRepository;
 
 import java.util.List;
 

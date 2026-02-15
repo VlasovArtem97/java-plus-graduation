@@ -1,7 +1,9 @@
 package ru.practicum.user.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -9,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.interaction.dto.user.NewUserRequest;
 import ru.practicum.interaction.dto.user.UserDto;
 import ru.practicum.user.service.UserService;
-
 
 import java.util.List;
 

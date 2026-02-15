@@ -3,13 +3,11 @@ package ru.practicum.request.controller;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.interaction.dto.request.RequestDTO;
-import ru.practicum.request.model.Request;
 import ru.practicum.request.service.RequestService;
 
 import java.util.List;
@@ -48,13 +46,13 @@ public class RequestController {
     //Добавил методы для feignClient
     @GetMapping("/findRequests")
     @ResponseStatus(HttpStatus.OK)
-    public List<RequestDTO> findRequestsByIds(@Positive @NotNull @PathVariable Long userId,
+    public List<RequestDTO> findRequestsByIds(@Positive @NotNull @PathVariable("userId") Long userId,
                                               @NotEmpty @RequestParam List<@NotNull @Positive Long> requestIds) {
         return requestService.findRequestsByIds(requestIds);
     }
 
     @PatchMapping("/updateRequests")
-    public void updateRequestList(@Positive @NotNull @PathVariable Long userId,
+    public void updateRequestList(@Positive @NotNull @PathVariable("userId") Long userId,
                                   @NotEmpty @RequestBody List<RequestDTO> requestList) {
         requestService.saveRequestList(userId, requestList);
     }

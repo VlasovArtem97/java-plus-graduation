@@ -12,5 +12,5 @@ import ru.practicum.interaction.dto.user.UserDto;
 public interface UserFeignClient {
 
     @GetMapping("/{userId}")
-    UserDto findUserById(@Positive @NotNull @PathVariable Long userId);
+    UserDto findUserById(@Positive @NotNull @PathVariable("userId") Long userId);
 }

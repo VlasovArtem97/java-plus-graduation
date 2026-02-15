@@ -10,12 +10,14 @@ import ru.practicum.main.compilations.model.Compilation;
 public interface CompilationMapper {
 
     @Mapping(target = "events", ignore = true)
+    @Mapping(target = "id", ignore = true)
     Compilation toCompilation(RequestToCreateNewCompilationDTO newCompilationDTO);
 
     CompilationDTO toCompilationDto(Compilation compilation);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "events", ignore = true)
+    @Mapping(target = "id", ignore = true)
     void updateCompilation(UpdateCompilationDTO updateCompilationDTO, @MappingTarget Compilation compilation);
 
 

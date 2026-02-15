@@ -2,7 +2,6 @@ package ru.practicum.request.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.interaction.dto.event.EventFullDto;
@@ -55,8 +54,6 @@ public class RequestServiceImpl implements RequestService {
 
         Request request = new Request();
         request.setCreated(LocalDateTime.now());
-//        request.setRequester(user);
-//        request.setEvent(event);
         request.setRequesterId(user.getId());
         request.setEventId(event.getId());
 
@@ -101,7 +98,7 @@ public class RequestServiceImpl implements RequestService {
     public List<RequestDTO> findRequestsByIds(List<Long> requestIds) {
         log.info("Получен запрос на получение Request's c id: {}", requestIds);
         List<Request> requests = requestRepository.findRequestsByIds(requestIds);
-        if(requests.isEmpty()) {
+        if (requests.isEmpty()) {
             log.error("Отсутстуют Request c id: {}", requestIds);
             throw new NotFoundException("Запросы(Request) с переданными ids: " + requestIds + " не найдены:");
         }
@@ -116,7 +113,7 @@ public class RequestServiceImpl implements RequestService {
                 .filter(id -> !requestId.contains(id))
                 .collect(Collectors.toSet());
 
-        if(!missingIds.isEmpty()) {
+        if (!missingIds.isEmpty()) {
             log.error("Отсутстуют Request c id: {}", missingIds);
             throw new NotFoundException("Запросы(Request) с переданными ids: " + missingIds + " не найдены:");
         }
@@ -141,7 +138,7 @@ public class RequestServiceImpl implements RequestService {
                 .map(RequestDTO::getRequesterId)
                 .collect(Collectors.toSet());
 
-        if(requestRepository.existsByRequesterIdInAndEventIdIn(requesterIds, eventsId)) {
+        if (requestRepository.existsByRequesterIdInAndEventIdIn(requesterIds, eventsId)) {
             List<Request> requestDTOList = requestList.stream()
                     .map(requestMapper::toRequest)
                     .toList();
@@ -158,7 +155,7 @@ public class RequestServiceImpl implements RequestService {
     public List<RequestDTO> getRequestByEventId(Long eventId) {
         log.info("Получен запрос на получение Request по eventId: {}", eventId);
         List<Request> requestList = requestRepository.getRequestByEventId(eventId);
-        if(requestList.isEmpty()) {
+        if (requestList.isEmpty()) {
             log.error("Request c eventId: [ {} ] не найден", eventId);
             throw new NotFoundException("Request c eventId: [ " + eventId + " ] не найден");
         }

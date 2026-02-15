@@ -1,15 +1,16 @@
 package ru.practicum.interaction.error;
 
+import feign.FeignException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -70,6 +71,7 @@ public class GlobalErrorHandler {
         return build(HttpStatus.NOT_FOUND, "The required object was not found.", e.getMessage());
     }
 
+    @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiError handleException(final Exception e) {
         log.error("Internal server error - {}", e.getMessage());
@@ -88,5 +90,21 @@ public class GlobalErrorHandler {
     public ApiError handleConflictException(final BadRequestException e) {
         log.error("Ошибка. Некорректный запрос: {}", e.getMessage());
         return build(HttpStatus.CONFLICT, "Ошибка.Некорректный запрос", e.getMessage());
+    }
+
+    //добавил при получении FeignException
+    @ExceptionHandler(FeignException.class)
+    public ResponseEntity<ApiError> handleFeignException(final FeignException e) {
+        log.error("Ошибка при обращении к внешнему сервису: {}", e.getMessage());
+        HttpStatus httpStatus = HttpStatus.resolve(e.status());
+        if (httpStatus == null) {
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        ApiError apiError = ApiError.builder()
+                .message(e.getMessage())
+                .reason("Ошибка при обращении к внешнему сервису")
+                .status(httpStatus.name())
+                .build();
+        return new ResponseEntity<>(apiError, httpStatus);
     }
 }

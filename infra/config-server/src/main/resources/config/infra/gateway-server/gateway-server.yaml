@@ -15,7 +15,7 @@ spring:
             retries: 3
             series: SERVER_ERROR
             statuses: BAD_GATEWAY, SERVICE_UNAVAILABLE, NOT_FOUND
-            methods: GET, PATCH, DELETE
+            methods: GET
             backoff:
               firstBackoff: 50ms
               maxBackoff: 500ms
@@ -37,16 +37,6 @@ spring:
                   - /admin/events/**
                   - /users/{userId}/events/**
                   - /events/**
-
-#        - id: compilations_service_route
-#          uri: lb://main-service
-#          predicates:
-#            - Path=/admin/compilations/**, /compilations/**
-
-#        - id: events_service_route
-#          uri: lb://main-service
-#          predicates:
-#            - Path=/admin/events/**, /users/{userId}/events/**, /events/**
 
         - id: ratings_service_route
           uri: lb://rating-service
