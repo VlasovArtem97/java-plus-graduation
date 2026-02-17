@@ -10,10 +10,10 @@ import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
 import ru.practicum.interaction.dto.event.EventAdminParamDto;
 import ru.practicum.interaction.dto.event.EventPublicParamsDto;
+import ru.practicum.interaction.dto.event.enums.StateEventDto;
 import ru.practicum.interaction.utill.DateTimeUtil;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.model.QEvent;
-import ru.practicum.main.event.model.status.StateEvent;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -62,7 +62,7 @@ public interface EventRepository extends JpaRepository<Event, Long>, QuerydslPre
             if (eventParamDto.getState() != null && !eventParamDto.getState().isEmpty()) {
                 booleanBuilder.and(qEvent.state.in(
                         eventParamDto.getState().stream()
-                                .map(StateEvent::valueOf)
+                                .map(StateEventDto::valueOf)
                                 .toList()
                 ));
             }
@@ -84,7 +84,7 @@ public interface EventRepository extends JpaRepository<Event, Long>, QuerydslPre
             QEvent qEvent = QEvent.event;
             BooleanBuilder booleanBuilder = new BooleanBuilder();
 
-            booleanBuilder.and(qEvent.state.eq(StateEvent.PUBLISHED));
+            booleanBuilder.and(qEvent.state.eq(StateEventDto.PUBLISHED));
             if (eventPublicParamsDto.getText() != null && !eventPublicParamsDto.getText().isBlank()) {
                 booleanBuilder.and(qEvent.annotation.containsIgnoreCase(eventPublicParamsDto.getText())
                         .or(qEvent.description.containsIgnoreCase(eventPublicParamsDto.getText()))

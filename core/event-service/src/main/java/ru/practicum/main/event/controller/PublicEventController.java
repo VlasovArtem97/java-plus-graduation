@@ -54,18 +54,4 @@ public class PublicEventController {
                                             HttpServletRequest request) {
         return eventService.findPublicEventById(eventId, request);
     }
-
-    /*Добавил методы для feignClient. Метод выше не подходит,
-    так как еще расчитан на взаимодействие со статистикий.
-     */
-    @GetMapping("/findEvent/{eventId}")
-    public EventFullDto findEventByIdForFeign(@PathVariable @Positive @NotNull Long eventId) {
-        return eventService.findEventByIdForFeign(eventId);
-    }
-
-    @PatchMapping("/updateConfirmedRequests/{eventId}")
-    public void updateConfirmedRequestsFromFeign(@Positive @NotNull @PathVariable Long eventId,
-                                 @NotNull @RequestBody EventFullDto eventFullDto) {
-        eventService.updateConfirmedRequestsFromFeign(eventId, eventFullDto);
-    }
 }

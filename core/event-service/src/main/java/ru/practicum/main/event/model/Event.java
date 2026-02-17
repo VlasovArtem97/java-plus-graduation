@@ -3,9 +3,9 @@ package ru.practicum.main.event.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import ru.practicum.interaction.dto.event.enums.StateEventDto;
 import ru.practicum.main.category.model.Category;
 import ru.practicum.main.compilations.model.Compilation;
-import ru.practicum.main.event.model.status.StateEvent;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -66,7 +66,7 @@ public class Event {
 
     @Enumerated(EnumType.STRING)
     @JoinColumn(name = "state", nullable = false)
-    private StateEvent state;
+    private StateEventDto state;
 
     @Column(name = "title", nullable = false)
     private String title;

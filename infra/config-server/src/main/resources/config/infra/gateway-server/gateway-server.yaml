@@ -37,6 +37,7 @@ spring:
                   - /admin/events/**
                   - /users/{userId}/events/**
                   - /events/**
+                  - /feign/events/**
 
         - id: ratings_service_route
           uri: lb://rating-service
@@ -46,7 +47,7 @@ spring:
         - id: requests_service_route
           uri: lb://request-service
           predicates:
-            - Path=/users/{userId}/requests/**
+            - Path=/users/{userId}/requests/**, /feign/requests/**
 
         - id: users_service_route
           uri: lb://user-service

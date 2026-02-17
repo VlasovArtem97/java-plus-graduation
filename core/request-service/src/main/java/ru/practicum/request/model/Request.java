@@ -2,6 +2,7 @@ package ru.practicum.request.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import ru.practicum.interaction.dto.request.enums.RequestStatusDto;
 
 import java.time.LocalDateTime;
 
@@ -29,5 +30,5 @@ public class Request {
     private Long requesterId;
 
     @Enumerated(EnumType.STRING)
-    private RequestStatus requestStatus;
+    private RequestStatusDto requestStatus;
 }

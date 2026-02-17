@@ -33,7 +33,7 @@ public class EventWithRequestImpl implements EventWithRequest {
                                                             EventRequestStatusUpdateRequest request) {
         userFeignClient.findUserById(userId);
         Event event = eventService.findEventWithOutDto(userId, eventId);
-        List<RequestDTO> requestList = requestFeignClient.findRequestsByIds(userId, request.getRequestIds());
+        List<RequestDTO> requestList = requestFeignClient.findRequestsByIds(request.getRequestIds());
         List<RequestDTO> confirmedRequests = new ArrayList<>();
         List<RequestDTO> rejectedRequests = new ArrayList<>();
 
@@ -49,13 +49,15 @@ public class EventWithRequestImpl implements EventWithRequest {
             }
         }
 
-        if ((!event.getRequestModeration() || event.getParticipantLimit().equals(0L)) && request.getStatus().equals(RequestStatusDto.CONFIRMED)) {
+        if ((!event.getRequestModeration() || event.getParticipantLimit().equals(0L)) &&
+                request.getStatus().equals(RequestStatusDto.CONFIRMED)) {
             for (RequestDTO req : requestList) {
                 req.setRequestStatus(RequestStatusDto.CONFIRMED);
                 event.setConfirmedRequests(event.getConfirmedRequests() + 1);
                 confirmedRequests.add(req);
             }
-        } else if ((!event.getRequestModeration() || event.getParticipantLimit().equals(0L)) && request.getStatus().equals(RequestStatusDto.REJECTED)) {
+        } else if ((!event.getRequestModeration() || event.getParticipantLimit().equals(0L)) &&
+                request.getStatus().equals(RequestStatusDto.REJECTED)) {
             for (RequestDTO req : requestList) {
                 req.setRequestStatus(RequestStatusDto.REJECTED);
                 rejectedRequests.add(req);
@@ -96,6 +98,6 @@ public class EventWithRequestImpl implements EventWithRequest {
     public List<RequestDTO> getEventRequest(Long userId, Long eventId) {
         userFeignClient.findUserById(userId);
         eventService.findEventWithOutDto(userId, eventId);
-        return requestFeignClient.findRequestByEventId(userId, eventId);
+        return requestFeignClient.findRequestByEventId(eventId);
     }
 }

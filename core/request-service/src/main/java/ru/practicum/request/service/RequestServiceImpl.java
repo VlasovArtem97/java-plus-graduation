@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.interaction.dto.event.EventFullDto;
 import ru.practicum.interaction.dto.event.enums.StateEventDto;
 import ru.practicum.interaction.dto.request.RequestDTO;
+import ru.practicum.interaction.dto.request.enums.RequestStatusDto;
 import ru.practicum.interaction.dto.user.UserDto;
 import ru.practicum.interaction.error.ConflictException;
 import ru.practicum.interaction.error.NotFoundException;
@@ -14,7 +15,6 @@ import ru.practicum.interaction.feignclient.EventFeignClient;
 import ru.practicum.interaction.feignclient.UserFeignClient;
 import ru.practicum.request.mapper.RequestMapper;
 import ru.practicum.request.model.Request;
-import ru.practicum.request.model.RequestStatus;
 import ru.practicum.request.repository.RequestRepository;
 
 import java.time.LocalDateTime;
@@ -60,14 +60,14 @@ public class RequestServiceImpl implements RequestService {
         request.setEventId(event.getId());
 
         if (!event.getRequestModeration()) {
-            request.setRequestStatus(RequestStatus.CONFIRMED);
+            request.setRequestStatus(RequestStatusDto.CONFIRMED);
             confirmedRequests ++;
         } else {
             if (event.getParticipantLimit() == 0) {
-                request.setRequestStatus(RequestStatus.CONFIRMED);
+                request.setRequestStatus(RequestStatusDto.CONFIRMED);
                 confirmedRequests ++;
             } else {
-                request.setRequestStatus(RequestStatus.PENDING);
+                request.setRequestStatus(RequestStatusDto.PENDING);
             }
         }
         //Если есть одобренные заявки отправляем в event на сохранения новых данных
@@ -95,7 +95,7 @@ public class RequestServiceImpl implements RequestService {
         getRequestById(requestId);
 
         Request requestFromDatabase = requestRepository.findByIdAndRequesterId(requestId, userId);
-        requestFromDatabase.setRequestStatus(RequestStatus.CANCELED);
+        requestFromDatabase.setRequestStatus(RequestStatusDto.CANCELED);
 
         Request savedRequest = requestRepository.save(requestFromDatabase);
 

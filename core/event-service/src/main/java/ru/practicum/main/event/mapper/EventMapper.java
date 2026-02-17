@@ -5,15 +5,15 @@ import ru.practicum.interaction.dto.event.EventFullDto;
 import ru.practicum.interaction.dto.event.EventShortDto;
 import ru.practicum.interaction.dto.event.NewEventDto;
 import ru.practicum.interaction.dto.event.UpdateEventUserRequest;
+import ru.practicum.interaction.dto.event.enums.StateEventDto;
 import ru.practicum.interaction.dto.user.UserDto;
 import ru.practicum.main.category.model.Category;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.model.Location;
-import ru.practicum.main.event.model.status.StateEvent;
 
 import java.time.LocalDateTime;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", imports = StateEventDto.class)
 public interface EventMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -21,7 +21,7 @@ public interface EventMapper {
     @Mapping(source = "category", target = "category")
     @Mapping(source = "location", target = "location")
     @Mapping(target = "createdOn", expression = "java(java.time.LocalDateTime.now())")
-    @Mapping(target = "state", expression = "java(StateEvent.PENDING)")
+    @Mapping(target = "state", expression = "java(StateEventDto.PENDING)")
     @Mapping(target = "confirmedRequests", constant = "0L")
     @Mapping(target = "views", constant = "0L")
     Event toEvent(NewEventDto newEventDto, UserDto user, Category category, Location location);

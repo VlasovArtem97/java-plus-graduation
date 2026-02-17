@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.korshunov.statsclient.StatsClient;
 import ru.practicum.interaction.dto.event.*;
 import ru.practicum.interaction.dto.event.enums.SortForParamPublicEventDto;
+import ru.practicum.interaction.dto.event.enums.StateEventDto;
 import ru.practicum.interaction.dto.event.enums.StateForUpdateEventDto;
 import ru.practicum.interaction.dto.user.UserDto;
 import ru.practicum.interaction.error.ConflictException;
@@ -24,7 +25,6 @@ import ru.practicum.main.event.mapper.EventMapper;
 import ru.practicum.main.event.mapper.LocationMapper;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.model.Location;
-import ru.practicum.main.event.model.status.StateEvent;
 import ru.practicum.main.event.repository.EventRepository;
 import ru.practicum.main.event.repository.LocationRepository;
 import statsdto.HitDto;
@@ -85,16 +85,16 @@ public class EventServiceImpl implements EventService {
         userFeignClient.findUserById(userId);
         Event event = findEventWithOutDto(userId, eventId);
         //проверка статуса
-        if (event.getState().equals(StateEvent.PUBLISHED)) {
+        if (event.getState().equals(StateEventDto.PUBLISHED)) {
             throw new ConflictException("Данный Event невозможно изменить, поскольку он уже опубликован");
         } else if (updateEventUserRequest.getStateAction() != null &&
-                (event.getState().equals(StateEvent.CANCELED) &&
+                (event.getState().equals(StateEventDto.CANCELED) &&
                         updateEventUserRequest.getStateAction().equals(StateForUpdateEventDto.SEND_TO_REVIEW))) {
-            event.setState(StateEvent.PENDING);
+            event.setState(StateEventDto.PENDING);
         } else if (updateEventUserRequest.getStateAction() != null &&
-                (event.getState().equals(StateEvent.PENDING) &&
+                (event.getState().equals(StateEventDto.PENDING) &&
                         updateEventUserRequest.getStateAction().equals(StateForUpdateEventDto.CANCEL_REVIEW))) {
-            event.setState(StateEvent.CANCELED);
+            event.setState(StateEventDto.CANCELED);
         }
         //проверка даты
         if (updateEventUserRequest.getEventDate() != null && updateEventUserRequest.getEventDate()
@@ -137,17 +137,17 @@ public class EventServiceImpl implements EventService {
                         "не ранее чем за час от текущего времени. Текущая дата события: " + event.getEventDate());
             }
         }
-        if (!event.getState().equals(StateEvent.PENDING)) {
+        if (!event.getState().equals(StateEventDto.PENDING)) {
             throw new ConflictException("Статус у события, которое планируется опубликовать/отклонить, " +
                     "должен быть PENDING. Текущий статус: " + event.getState());
         }
         if (updateEventAdminRequestDto.getStateAction() != null) {
             if (updateEventAdminRequestDto.getStateAction().equals(StateForUpdateEventDto.PUBLISH_EVENT)) {
-                event.setState(StateEvent.PUBLISHED);
+                event.setState(StateEventDto.PUBLISHED);
                 event.setPublishedOn(LocalDateTime.now());
             }
             if (updateEventAdminRequestDto.getStateAction().equals(StateForUpdateEventDto.REJECT_EVENT)) {
-                event.setState(StateEvent.CANCELED);
+                event.setState(StateEventDto.CANCELED);
             }
         }
         Event updateEventWithCategoryAndLocation = updateCategoryAndLocation(updateEventAdminRequestDto, event);
@@ -226,7 +226,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventFullDto findPublicEventById(Long eventId, HttpServletRequest request) {
         Event event = findEventById(eventId);
-        if (!event.getState().equals(StateEvent.PUBLISHED)) {
+        if (!event.getState().equals(StateEventDto.PUBLISHED)) {
             throw new NotFoundException("Событие не доступно. Статус события: " + event.getState());
         }
         List<Event> eventWithView = getStats(List.of(event), null, null, true);

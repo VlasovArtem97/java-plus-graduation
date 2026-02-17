@@ -42,24 +42,4 @@ public class RequestController {
     public RequestDTO cancelRequestCurrentUser(@Positive @PathVariable Long userId, @Positive @PathVariable Long requestId) {
         return requestService.cancelRequestCurrentUser(userId, requestId);
     }
-
-    //Добавил методы для feignClient
-    @GetMapping("/findRequests")
-    @ResponseStatus(HttpStatus.OK)
-    public List<RequestDTO> findRequestsByIds(@Positive @NotNull @PathVariable("userId") Long userId,
-                                              @NotEmpty @RequestParam List<@NotNull @Positive Long> requestIds) {
-        return requestService.findRequestsByIds(requestIds);
-    }
-
-    @PatchMapping("/updateRequests")
-    public void updateRequestList(@Positive @NotNull @PathVariable("userId") Long userId,
-                                  @NotEmpty @RequestBody List<@NotNull RequestDTO> requestList) {
-        requestService.saveRequestList(userId, requestList);
-    }
-
-    @GetMapping("/{eventId}")
-    public List<RequestDTO> findRequestByEventId(@Positive @NotNull @PathVariable("eventId") Long userId,
-                                                 @Positive @NotNull @PathVariable("eventId") Long eventId) {
-        return requestService.getRequestByEventId(eventId);
-    }
 }
