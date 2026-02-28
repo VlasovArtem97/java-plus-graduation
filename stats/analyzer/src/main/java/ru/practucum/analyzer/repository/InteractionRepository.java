@@ -15,11 +15,13 @@ public interface InteractionRepository extends JpaRepository<Interaction, Long> 
     @Query(value = "SELECT * FROM interactions WHERE user_id = :u ORDER BY timestamp DESC LIMIT :l", nativeQuery = true)
     List<Interaction> findRecent(@Param("u") Long userId, @Param("l") int limit);
 
-    @Query("SELECT SUM(i.rating) FROM Interaction i WHERE i.eventId = :e")
-    Double sumRatingByEventId(@Param("e") Long eventId);
 
-
-    @Query("SELECT i.eventId, SUM(i.rating) FROM Interaction i WHERE i.eventId IN :ids GROUP BY i.eventId")
+    @Query(value = "SELECT event_id, SUM(max_rating) FROM (" +
+            "  SELECT event_id, user_id, MAX(rating) as max_rating " +
+            "  FROM interactions " +
+            "  WHERE event_id IN :ids " +
+            "  GROUP BY event_id, user_id" +
+            ") as subquery GROUP BY event_id", nativeQuery = true)
     List<Object[]> sumRatingsByEventIds(@Param("ids") List<Long> eventIds);
 
     List<Interaction> findAllByUserId(long userId);

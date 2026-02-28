@@ -31,17 +31,19 @@ public class RecommendationServiceImpl implements RecommendationService {
      */
     public List<RecommendedEventProto> getRecommendationsForUser(UserPredictionsRequestProto request) {
         long userId = request.getUserId();
+        log.info("Запрос рекомендаций для пользователя: {}, max results: {}", userId, request.getMaxResults());
 
-        // 1. Получаем историю (лимит 20 последних действий)
         List<Interaction> recent = interactionRepository.findRecent(userId, 20);
-        if (recent.isEmpty()) return List.of();
+        if (recent.isEmpty()) {
+            log.warn("История взаимодействий для пользователя {} пуста. Рекомендовать нечего.", userId);
+            return List.of();
+        }
+        log.debug("Найдено последних взаимодействий: {}", recent.size());
 
-        // Превращаем историю в Map для быстрого поиска рейтинга O(1)
         Map<Long, Float> userRatings = recent.stream()
                 .collect(Collectors.toMap(Interaction::getEventId, Interaction::getRating, (a, b) -> a));
         Set<Long> watchedIds = userRatings.keySet();
 
-        // 2. Поиск кандидатов (одним запросом собираем все похожие события для всей истории)
         List<Long> candidates = recent.stream()
                 .flatMap(i -> similarityRepository.findAnySimilar(i.getEventId()).stream())
                 .map(s -> watchedIds.contains(s.getEventA()) ? s.getEventB() : s.getEventA())
@@ -49,11 +51,11 @@ public class RecommendationServiceImpl implements RecommendationService {
                 .distinct()
                 .toList();
 
+        log.debug("Найдено потенциальных кандидатов: {}", candidates.size());
+
         if (candidates.isEmpty()) return List.of();
 
-        // 3. Расчет оценок
         return candidates.stream().map(candId -> {
-                    // Используем native query с LIMIT 5 для каждого кандидата
                     List<Similarity> neighbors = similarityRepository.findTopKNeighbors(candId, new ArrayList<>(watchedIds), 5);
 
                     double weightedSum = 0;
@@ -76,12 +78,15 @@ public class RecommendationServiceImpl implements RecommendationService {
     }
 
     public List<RecommendedEventProto> getSimilarEvents(SimilarEventsRequestProto request) {
+        log.info("Запрос похожих событий для eventId: {}, для пользователя: {}", request.getEventId(), request.getUserId());
+
         List<Similarity> similarities = similarityRepository.findAnySimilar(request.getEventId());
+        log.debug("Найдено похожих пар в БД: {}", similarities.size());
 
         Set<Long> userHistory = interactionRepository.findAllByUserId(request.getUserId())
                 .stream().map(Interaction::getEventId).collect(Collectors.toSet());
 
-        return similarities.stream()
+        List<RecommendedEventProto> result = similarities.stream()
                 .map(s -> {
                     long targetId = s.getEventA().equals(request.getEventId()) ? s.getEventB() : s.getEventA();
                     return Map.entry(targetId, (float) s.getScore());
@@ -94,23 +99,39 @@ public class RecommendationServiceImpl implements RecommendationService {
                         .setScore(e.getValue())
                         .build())
                 .toList();
+
+        log.info("Возвращаю {} похожих событий", result.size());
+        return result;
     }
 
     public List<RecommendedEventProto> getInteractionsCount(InteractionsCountRequestProto request) {
         List<Long> ids = request.getEventIdList();
+        log.info("Запрос суммы взаимодействий для мероприятий: {}", ids);
+
         if (ids.isEmpty()) return List.of();
 
-        Map<Long, Double> results = interactionRepository.sumRatingsByEventIds(ids).stream()
+        List<Object[]> rawData = interactionRepository.sumRatingsByEventIds(ids);
+        log.debug("Сырые данные из репозитория: {}", rawData.stream()
+                .map(Arrays::toString).collect(Collectors.joining(", ")));
+
+        Map<Long, Double> results = rawData.stream()
                 .collect(Collectors.toMap(
                         row -> (Long) row[0],
                         row -> (Double) row[1],
                         (a, b) -> a
                 ));
 
-        return ids.stream().map(id -> RecommendedEventProto.newBuilder()
-                .setEventId(id)
-                .setScore(results.getOrDefault(id, 0.0).floatValue())
-                .build()
+        List<RecommendedEventProto> finalResult = ids.stream().map(id -> {
+                    float score = results.getOrDefault(id, 0.0).floatValue();
+                    log.debug("Событие ID: {}, итоговый score (сумма весов): {}", id, score);
+                    return RecommendedEventProto.newBuilder()
+                            .setEventId(id)
+                            .setScore(score)
+                            .build();
+                }
         ).toList();
+
+        log.info("Метод getInteractionsCount успешно завершен. Вернул {} записей", finalResult.size());
+        return finalResult;
     }
 }
