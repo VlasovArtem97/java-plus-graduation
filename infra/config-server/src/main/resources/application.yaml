@@ -19,8 +19,9 @@ spring:
             - classpath:config/core/user-service
             - classpath:config/core/request-service
             - classpath:config/core/rating-service
-            - classpath:config/stats/stats-server
             - classpath:config/stats/collector
+            - classpath:config/stats/analyzer
+            - classpath:config/stats/aggregator
             - classpath:config/infra/gateway-server
 
 #Регистрируемся в eureka
