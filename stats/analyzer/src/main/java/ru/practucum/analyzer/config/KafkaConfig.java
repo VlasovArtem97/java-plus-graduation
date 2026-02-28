@@ -40,7 +40,7 @@ public class KafkaConfig {
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, UserActionDeserializer.class.getName());
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.EARLIEST.name().toLowerCase());
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OffsetResetStrategy.LATEST.name().toLowerCase());
         config.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 10);
         config.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 30000);
         config.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, 1024);

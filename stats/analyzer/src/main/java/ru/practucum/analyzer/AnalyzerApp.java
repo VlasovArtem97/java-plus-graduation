@@ -6,7 +6,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import ru.practucum.analyzer.service.kafka.EventSimilarStarter;
 import ru.practucum.analyzer.service.kafka.UserActionStarter;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "ru.practucum.analyzer")
 public class AnalyzerApp {
 
     public static void main(String[] args) {
