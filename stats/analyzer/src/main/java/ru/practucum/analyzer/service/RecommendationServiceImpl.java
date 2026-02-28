@@ -12,9 +12,8 @@ import ru.practucum.analyzer.model.Similarity;
 import ru.practucum.analyzer.repository.InteractionRepository;
 import ru.practucum.analyzer.repository.SimilarityRepository;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -33,13 +32,16 @@ public class RecommendationServiceImpl implements RecommendationService {
     public List<RecommendedEventProto> getRecommendationsForUser(UserPredictionsRequestProto request) {
         long userId = request.getUserId();
 
-        // 1. Получаем историю взаимодействий (в репозитории должен быть LIMIT N)
+        // 1. Получаем историю (лимит 20 последних действий)
         List<Interaction> recent = interactionRepository.findRecent(userId, 20);
         if (recent.isEmpty()) return List.of();
 
-        List<Long> watchedIds = recent.stream().map(Interaction::getEventId).toList();
+        // Превращаем историю в Map для быстрого поиска рейтинга O(1)
+        Map<Long, Float> userRatings = recent.stream()
+                .collect(Collectors.toMap(Interaction::getEventId, Interaction::getRating, (a, b) -> a));
+        Set<Long> watchedIds = userRatings.keySet();
 
-        // 2. Поиск кандидатов (похожие на просмотренные, но сами не просмотрены)
+        // 2. Поиск кандидатов (одним запросом собираем все похожие события для всей истории)
         List<Long> candidates = recent.stream()
                 .flatMap(i -> similarityRepository.findAnySimilar(i.getEventId()).stream())
                 .map(s -> watchedIds.contains(s.getEventA()) ? s.getEventB() : s.getEventA())
@@ -47,25 +49,21 @@ public class RecommendationServiceImpl implements RecommendationService {
                 .distinct()
                 .toList();
 
-        // 3. Расчет оценки по формуле взвешенного среднего
+        if (candidates.isEmpty()) return List.of();
+
+        // 3. Расчет оценок
         return candidates.stream().map(candId -> {
-                    // K ближайших соседей среди уже просмотренных пользователем мероприятий
-                    List<Similarity> neighbors = similarityRepository.findTopKNeighbors(candId, watchedIds, 5);
+                    // Используем native query с LIMIT 5 для каждого кандидата
+                    List<Similarity> neighbors = similarityRepository.findTopKNeighbors(candId, new ArrayList<>(watchedIds), 5);
 
                     double weightedSum = 0;
                     double simSum = 0;
 
                     for (Similarity s : neighbors) {
-                        // Находим ID того события из пары, которое пользователь УЖЕ видел
                         long wId = s.getEventA().equals(candId) ? s.getEventB() : s.getEventA();
+                        float rating = userRatings.getOrDefault(wId, 0f);
 
-                        // Берем рейтинг этого события из истории
-                        float userRating = recent.stream()
-                                .filter(r -> r.getEventId().equals(wId))
-                                .findFirst()
-                                .map(Interaction::getRating).orElse(0f);
-
-                        weightedSum += userRating * s.getScore();
+                        weightedSum += rating * s.getScore();
                         simSum += s.getScore();
                     }
 
@@ -77,23 +75,17 @@ public class RecommendationServiceImpl implements RecommendationService {
                 .toList();
     }
 
-    /**
-     * Поиск похожих мероприятий (для SimilarEventsRequestProto)
-     */
     public List<RecommendedEventProto> getSimilarEvents(SimilarEventsRequestProto request) {
-        // Получаем все пары, где участвует наше событие
         List<Similarity> similarities = similarityRepository.findAnySimilar(request.getEventId());
 
-        // История пользователя для исключения
-        List<Long> userHistory = interactionRepository.findAllByUserId(request.getUserId())
-                .stream().map(Interaction::getEventId).toList();
+        Set<Long> userHistory = interactionRepository.findAllByUserId(request.getUserId())
+                .stream().map(Interaction::getEventId).collect(Collectors.toSet());
 
         return similarities.stream()
                 .map(s -> {
                     long targetId = s.getEventA().equals(request.getEventId()) ? s.getEventB() : s.getEventA();
                     return Map.entry(targetId, (float) s.getScore());
                 })
-                // ТЗ: Исключаем те, с которыми пользователь уже взаимодействовал
                 .filter(e -> !userHistory.contains(e.getKey()))
                 .sorted(Map.Entry.<Long, Float>comparingByValue().reversed())
                 .limit(request.getMaxResults())
@@ -104,17 +96,21 @@ public class RecommendationServiceImpl implements RecommendationService {
                 .toList();
     }
 
-    /**
-     * Сумма максимальных весов взаимодействий
-     */
     public List<RecommendedEventProto> getInteractionsCount(InteractionsCountRequestProto request) {
-        return request.getEventIdList().stream().map(id -> {
-            // В базе rating — это float, возвращаем сумму как float
-            Double sum = interactionRepository.sumRatingByEventId(id);
-            return RecommendedEventProto.newBuilder()
-                    .setEventId(id)
-                    .setScore(sum != null ? sum.floatValue() : 0.0f)
-                    .build();
-        }).toList();
+        List<Long> ids = request.getEventIdList();
+        if (ids.isEmpty()) return List.of();
+
+        Map<Long, Double> results = interactionRepository.sumRatingsByEventIds(ids).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Double) row[1],
+                        (a, b) -> a
+                ));
+
+        return ids.stream().map(id -> RecommendedEventProto.newBuilder()
+                .setEventId(id)
+                .setScore(results.getOrDefault(id, 0.0).floatValue())
+                .build()
+        ).toList();
     }
 }

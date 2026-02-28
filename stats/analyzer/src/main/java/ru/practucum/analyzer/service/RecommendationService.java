@@ -1,6 +1,9 @@
 package ru.practucum.analyzer.service;
 
-import ru.practicum.ewm.stats.proto.messages.*;
+import ru.practicum.ewm.stats.proto.messages.InteractionsCountRequestProto;
+import ru.practicum.ewm.stats.proto.messages.RecommendedEventProto;
+import ru.practicum.ewm.stats.proto.messages.SimilarEventsRequestProto;
+import ru.practicum.ewm.stats.proto.messages.UserPredictionsRequestProto;
 
 import java.util.List;
 

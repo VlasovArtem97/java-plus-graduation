@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CollectorServiceImpl implements CollectorService{
+public class CollectorServiceImpl implements CollectorService {
 
     private final Producer<String, SpecificRecordBase> producer;
     private final UserActionMapper userActionMapper;

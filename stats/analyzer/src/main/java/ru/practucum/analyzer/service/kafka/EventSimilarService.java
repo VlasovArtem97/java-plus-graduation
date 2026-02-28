@@ -2,7 +2,6 @@ package ru.practucum.analyzer.service.kafka;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 import ru.practucum.analyzer.model.Similarity;
@@ -25,19 +24,19 @@ public class EventSimilarService {
         long eventB = Math.max(avro.getEventA(), avro.getEventB());
 
         Optional<Similarity> similarity = similarityRepository.findByEventAAndEventB(eventA, eventB);
-        if(similarity.isEmpty()) {
+        if (similarity.isEmpty()) {
             log.debug("Не было найдено схожесть мероприятий");
             similarityRepository.save(Similarity.builder()
-                            .eventA(eventA)
-                            .eventB(eventB)
-                            .instant(avro.getTimestamp())
-                            .score(avro.getScore())
+                    .eventA(eventA)
+                    .eventB(eventB)
+                    .instant(avro.getTimestamp())
+                    .score(avro.getScore())
                     .build());
             log.debug("Схожесть мероприятий успешно сохранено");
         } else {
             Similarity updateSimilarity = similarity.get();
             log.debug("Схожесть мероприятий найдена: {}", updateSimilarity);
-            if(avro.getScore() > updateSimilarity.getScore()) {
+            if (avro.getScore() > updateSimilarity.getScore()) {
                 updateSimilarity.setScore(avro.getScore());
                 updateSimilarity.setInstant(avro.getTimestamp());
                 similarityRepository.save(updateSimilarity);

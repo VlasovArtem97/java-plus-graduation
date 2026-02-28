@@ -32,8 +32,8 @@ public class AnalyzerClient {
 
     public Stream<RecommendedEventProto> getSimilarEvents(long eventId, long userId, int maxResults) {
         SimilarEventsRequestProto request = SimilarEventsRequestProto.newBuilder()
-                .setEventId((int)eventId)
-                .setUserId((int)userId)
+                .setEventId((int) eventId)
+                .setUserId((int) userId)
                 .setMaxResults(maxResults)
                 .build();
 

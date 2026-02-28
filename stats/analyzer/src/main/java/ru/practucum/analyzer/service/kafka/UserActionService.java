@@ -3,7 +3,6 @@ package ru.practucum.analyzer.service.kafka;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.stats.avro.ActionTypeAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
@@ -32,39 +31,39 @@ public class UserActionService {
         float rating = getWeightByAction(avro.getActionType());
         Optional<Interaction> interaction = interactionRepository.findByEventIdAndUserId(avro.getEventId(),
                 avro.getUserId());
-        if(interaction.isEmpty()) {
+        if (interaction.isEmpty()) {
             log.debug("Запись взаимодействия пользователя с мероприятием не найдена. создается новая запись");
             interactionRepository.save(Interaction.builder()
-                            .userId(avro.getUserId())
-                            .eventId(avro.getEventId())
-                            .instant(avro.getTimestamp())
-                            .rating(rating)
+                    .userId(avro.getUserId())
+                    .eventId(avro.getEventId())
+                    .instant(avro.getTimestamp())
+                    .rating(rating)
                     .build());
             log.debug("Запись взаимодействия пользователя с мероприятием успешно сохранено");
         } else {
             log.debug("найдена запись взаимодействия пользователя с мероприятием: {}", interaction);
             Interaction oldInteraction = interaction.get();
-                oldInteraction.setRating(rating);
-                oldInteraction.setInstant(avro.getTimestamp());
-                interactionRepository.save(oldInteraction);
-                log.debug("Запись взаимодействия пользователя с мероприятием успешно обновлена");
+            oldInteraction.setRating(rating);
+            oldInteraction.setInstant(avro.getTimestamp());
+            interactionRepository.save(oldInteraction);
+            log.debug("Запись взаимодействия пользователя с мероприятием успешно обновлена");
         }
     }
 
     private void validate(UserActionAvro avro) {
-        if(avro == null) {
+        if (avro == null) {
             throw new IllegalStateException("Переданный объект равен null");
         }
-        if(avro.getUserId() < 1) {
+        if (avro.getUserId() < 1) {
             throw new IllegalStateException("UserId меньше нуля: " + avro.getUserId());
         }
-        if(avro.getEventId() < 1) {
+        if (avro.getEventId() < 1) {
             throw new IllegalStateException("EventId меньше нуля: " + avro.getEventId());
         }
-        if(avro.getActionType() == null) {
+        if (avro.getActionType() == null) {
             throw new IllegalStateException("ActionType == null: " + avro.getActionType());
         }
-        if(avro.getTimestamp() == null) {
+        if (avro.getTimestamp() == null) {
             throw new IllegalStateException("Timestamp == null: " + avro.getActionType());
         }
         if (avro.getTimestamp().isAfter(Instant.now().plus(Duration.ofMinutes(2)))) {

@@ -17,8 +17,6 @@ import ru.practicum.ewm.stats.avro.UserActionAvro;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
@@ -47,7 +45,7 @@ public class AggregationStarter {
             consumer.subscribe(List.of(topicUserAction));
             while (!closed.get()) {
                 ConsumerRecords<String, SpecificRecordBase> record = consumer.poll(Duration.ofMillis(100));
-                if(record.isEmpty()) {
+                if (record.isEmpty()) {
                     continue;
                 }
                 for (ConsumerRecord<String, SpecificRecordBase> rec : record) {
@@ -76,9 +74,9 @@ public class AggregationStarter {
         List<EventSimilarityAvro> eventSimilarityAvroList = aggregationService.processEvent((UserActionAvro) rec.value());
         if (!eventSimilarityAvroList.isEmpty()) {
             log.debug("Данные UserActionAvro обновлены: {}", eventSimilarityAvroList);
-            for(EventSimilarityAvro e : eventSimilarityAvroList) {
+            for (EventSimilarityAvro e : eventSimilarityAvroList) {
                 producer.send(new ProducerRecord<>(topicEventsSimilarity, e), (metadata, exception) -> {
-                    if(exception != null) {
+                    if (exception != null) {
                         log.error("Не удалось отправить объект типа \"EventSimilarityAvro\": {}, в топик: [ {} ]",
                                 e, topicEventsSimilarity);
                     } else {

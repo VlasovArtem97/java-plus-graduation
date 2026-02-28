@@ -10,9 +10,7 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
-import ru.practicum.ewm.stats.avro.UserActionAvro;
 
 import java.time.Duration;
 import java.util.List;
@@ -43,7 +41,7 @@ public class EventSimilarStarter {
             consumer.subscribe(List.of(topicEventSimilarity));
             while (!closed.get()) {
                 ConsumerRecords<String, SpecificRecordBase> record = consumer.poll(Duration.ofMillis(100));
-                if(record.isEmpty()) {
+                if (record.isEmpty()) {
                     continue;
                 }
                 for (ConsumerRecord<String, SpecificRecordBase> rec : record) {

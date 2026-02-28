@@ -34,7 +34,7 @@ public class CollectorController extends UserActionControllerGrpc.UserActionCont
             ));
         } catch (Exception e) {
             log.error("Ошибка при работе с Collector: {}", e.toString());
-            String description = e.getMessage() != null ? e.getMessage(): e.toString();
+            String description = e.getMessage() != null ? e.getMessage() : e.toString();
             responseObserver.onError(new StatusRuntimeException(
                     Status.INTERNAL
                             .withDescription("Ошибка при работе с Collector: " + description)

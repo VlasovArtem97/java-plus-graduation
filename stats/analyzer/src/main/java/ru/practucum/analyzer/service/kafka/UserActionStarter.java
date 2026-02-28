@@ -6,13 +6,10 @@ import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 
 import java.time.Duration;
@@ -45,7 +42,7 @@ public class UserActionStarter implements Runnable {
             consumer.subscribe(List.of(topicUserAction));
             while (!closed.get()) {
                 ConsumerRecords<String, SpecificRecordBase> record = consumer.poll(Duration.ofMillis(100));
-                if(record.isEmpty()) {
+                if (record.isEmpty()) {
                     continue;
                 }
                 for (ConsumerRecord<String, SpecificRecordBase> rec : record) {

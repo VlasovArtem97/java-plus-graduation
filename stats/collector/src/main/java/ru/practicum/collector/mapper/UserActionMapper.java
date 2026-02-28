@@ -1,8 +1,6 @@
 package ru.practicum.collector.mapper;
 
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
 import ru.practicum.ewm.stats.avro.ActionTypeAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 import ru.practicum.ewm.stats.proto.messages.ActionTypeProto;
@@ -21,7 +19,7 @@ public interface UserActionMapper {
             case ACTION_REGISTER -> ActionTypeAvro.REGISTER;
             case ACTION_LIKE -> ActionTypeAvro.LIKE;
             case null, default ->
-                throw new IllegalStateException("Некорректно указан тип действия пользователя(UserAction)");
+                    throw new IllegalStateException("Некорректно указан тип действия пользователя(UserAction)");
         };
     }
 
