@@ -111,27 +111,24 @@ public class RecommendationServiceImpl implements RecommendationService {
         if (ids.isEmpty()) return List.of();
 
         List<Object[]> rawData = interactionRepository.sumRatingsByEventIds(ids);
-        log.debug("Сырые данные из репозитория: {}", rawData.stream()
-                .map(Arrays::toString).collect(Collectors.joining(", ")));
 
+        // Используем ((Number) row[1]).doubleValue() для безопасного приведения
         Map<Long, Double> results = rawData.stream()
                 .collect(Collectors.toMap(
                         row -> (Long) row[0],
-                        row -> (Double) row[1],
+                        row -> ((Number) row[1]).doubleValue(),
                         (a, b) -> a
                 ));
 
-        List<RecommendedEventProto> finalResult = ids.stream().map(id -> {
+        return ids.stream().map(id -> {
+                    // В Proto score — это float, поэтому здесь конвертируем в floatValue()
                     float score = results.getOrDefault(id, 0.0).floatValue();
-                    log.debug("Событие ID: {}, итоговый score (сумма весов): {}", id, score);
+                    log.debug("Событие ID: {}, итоговый score: {}", id, score);
                     return RecommendedEventProto.newBuilder()
                             .setEventId(id)
                             .setScore(score)
                             .build();
                 }
         ).toList();
-
-        log.info("Метод getInteractionsCount успешно завершен. Вернул {} записей", finalResult.size());
-        return finalResult;
     }
 }
