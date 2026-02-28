@@ -26,7 +26,7 @@ public class KafkaConfig {
     @Value("${kafka.consumerClientIdForAnalyzerEventSimilar}")
     private String clientIdForEventSimilar;
 
-    @Value("${kafka.consumerGroupIdForAggregator}")
+    @Value("${kafka.consumerGroupIdForAnalyzer}")
     private String groupId;
 
     @Bean("consumerUserAction")
