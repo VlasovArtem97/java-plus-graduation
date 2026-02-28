@@ -8,6 +8,7 @@ import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import ru.practicum.avrodeserialization.EventSimilarDeserializer;
 import ru.practicum.avrodeserialization.UserActionDeserializer;
@@ -15,6 +16,7 @@ import ru.practicum.avrodeserialization.UserActionDeserializer;
 import java.util.Properties;
 
 @Configuration
+@ComponentScan(basePackages = {"ru.practicum.avroserialization", "ru.practicum.avrodeserialization"})
 public class KafkaConfig {
 
     @Value("${kafka.port}")
