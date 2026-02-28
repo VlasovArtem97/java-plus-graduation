@@ -20,6 +20,7 @@ spring:
             - classpath:config/core/request-service
             - classpath:config/core/rating-service
             - classpath:config/stats/stats-server
+            - classpath:config/stats/collector
             - classpath:config/infra/gateway-server
 
 #Регистрируемся в eureka

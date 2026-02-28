@@ -23,7 +23,7 @@ public interface EventMapper {
     @Mapping(target = "createdOn", expression = "java(java.time.LocalDateTime.now())")
     @Mapping(target = "state", expression = "java(StateEventDto.PENDING)")
     @Mapping(target = "confirmedRequests", constant = "0L")
-    @Mapping(target = "views", constant = "0L")
+    @Mapping(target = "rating", constant = "0.0")
     Event toEvent(NewEventDto newEventDto, UserDto user, Category category, Location location);
 
     EventFullDto toEventFullDto(Event event);
@@ -37,7 +37,7 @@ public interface EventMapper {
     @Mapping(target = "initiator", ignore = true)
     @Mapping(target = "publishedOn", ignore = true)
     @Mapping(target = "state", ignore = true)
-    @Mapping(target = "views", ignore = true)
+    @Mapping(target = "rating", ignore = true)
     @Mapping(target = "compilations", ignore = true)
     @Mapping(target = "location.id", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

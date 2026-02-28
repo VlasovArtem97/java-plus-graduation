@@ -1,0 +1,32 @@
+server:
+  port: 0
+
+kafka:
+  port: localhost:9092
+  topicAction: stats.user-actions.v1
+
+grpc:
+  server:
+    port: 0
+
+
+logging:
+  level:
+    ru.practicum.collector: DEBUG
+    org.apache.kafka: DEBUG
+    net.devh.boot.grpc: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+#  Влияние kafka на основной сервис (если кафка упадет, то и все приложение также упадет)
+  health:
+    kafka:
+      enabled: true
+# Показывает расширенный вариант статуса сервиса(сервис + kafka)
+  endpoint:
+    health:
+      show-details: always
+           # Чтобы статус Кафки влиял на общий статус сервиса

@@ -1,6 +1,10 @@
 package ru.practicum.main.event.service;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import ru.practicum.interaction.dto.event.*;
 import ru.practicum.main.event.model.Event;
 
@@ -35,4 +39,6 @@ public interface EventService {
     EventFullDto findEventByIdForFeign(Long eventId);
 
     void updateConfirmedRequestsFromFeign(Long eventId, EventFullDto eventFullDto);
+
+    List<EventShortDto> getRecommendations(Long userId, int size);
 }

@@ -23,5 +23,6 @@ public class EventPublicParamsDto {
     private Boolean onlyAvailable;
     private SortForParamPublicEventDto sort;
     private int from;
+    private long userId;
     private int size;
 }
