@@ -23,112 +23,104 @@ public class RecommendationServiceImpl implements RecommendationService {
     private final SimilarityRepository similarityRepository;
     private final InteractionRepository interactionRepository;
 
-    /**
-     * АЛГОРИТМ 1: Поиск похожих мероприятий (GetSimilarEvents)
-     */
-    /**
-     * Алгоритм предсказания оценки (Главная страница)
-     */
-    public List<RecommendedEventProto> getRecommendationsForUser(UserPredictionsRequestProto request) {
-        long userId = request.getUserId();
-        log.info("Запрос рекомендаций для пользователя: {}, max results: {}", userId, request.getMaxResults());
+    private static final int K_NEIGHBORS = 10;
 
-        List<Interaction> recent = interactionRepository.findRecent(userId, 20);
-        if (recent.isEmpty()) {
-            log.warn("История взаимодействий для пользователя {} пуста. Рекомендовать нечего.", userId);
+    public List<RecommendedEventProto> getRecommendationsForUser(UserPredictionsRequestProto request) {
+        Long userId = request.getUserId();
+        log.info("Запрос рекомендаций для userId={}, maxResults={}", userId, request.getMaxResults());
+
+        List<Interaction> userInteractions = interactionRepository.findAllByUserId(userId);
+        if (userInteractions.isEmpty()) {
+            log.debug("Для пользователя {} нет истории взаимодействий", userId);
             return List.of();
         }
-        log.debug("Найдено последних взаимодействий: {}", recent.size());
+        log.debug("Найдено {} взаимодействий для пользователя {}", userInteractions.size(), userId);
 
-        Map<Long, Float> userRatings = recent.stream()
-                .collect(Collectors.toMap(Interaction::getEventId, Interaction::getRating, (a, b) -> a));
-        Set<Long> watchedIds = userRatings.keySet();
+        Set<Long> interactedIds = userInteractions.stream()
+                .map(Interaction::getEventId).collect(Collectors.toSet());
 
-        List<Long> candidates = recent.stream()
-                .flatMap(i -> similarityRepository.findAnySimilar(i.getEventId()).stream())
-                .map(s -> watchedIds.contains(s.getEventA()) ? s.getEventB() : s.getEventA())
-                .filter(id -> !watchedIds.contains(id))
-                .distinct()
-                .toList();
+        List<Similarity> similarities = similarityRepository.findByEventIds(interactedIds);
+        log.debug("Из БД получено {} записей о сходстве для пользователя {}", similarities.size(), userId);
 
-        log.debug("Найдено потенциальных кандидатов: {}", candidates.size());
+        Map<Long, Double> candidates = new HashMap<>();
+        for (Similarity sim : similarities) {
+            Long candidate = null;
+            // Определяем, кто из пары является кандидатом
+            if (interactedIds.contains(sim.getEvent1())) candidate = sim.getEvent2();
+            else if (interactedIds.contains(sim.getEvent2())) candidate = sim.getEvent1();
 
-        if (candidates.isEmpty()) return List.of();
+            if (candidate != null && !interactedIds.contains(candidate)) {
+                candidates.merge(candidate, sim.getSimilarity(), Math::max);
+            }
+        }
+        log.debug("После фильтрации найдено {} потенциальных кандидатов", candidates.size());
 
-        return candidates.stream().map(candId -> {
-                    List<Similarity> neighbors = similarityRepository.findTopKNeighbors(candId, new ArrayList<>(watchedIds), 5);
-
-                    double weightedSum = 0;
-                    double simSum = 0;
-
-                    for (Similarity s : neighbors) {
-                        long wId = s.getEventA().equals(candId) ? s.getEventB() : s.getEventA();
-                        float rating = userRatings.getOrDefault(wId, 0f);
-
-                        weightedSum += rating * s.getScore();
-                        simSum += s.getScore();
-                    }
-
-                    float finalScore = simSum == 0 ? 0 : (float) (weightedSum / simSum);
-                    return RecommendedEventProto.newBuilder().setEventId(candId).setScore(finalScore).build();
-                })
-                .sorted(Comparator.comparing(RecommendedEventProto::getScore).reversed())
+        List<RecommendedEventProto> result = candidates.entrySet().stream()
+                .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
                 .limit(request.getMaxResults())
+                .map(e -> toProto(e.getKey(), e.getValue().floatValue()))
                 .toList();
+
+        log.info("Успешно сформировано {} рекомендаций для пользователя {}", result.size(), userId);
+        return result;
     }
 
     public List<RecommendedEventProto> getSimilarEvents(SimilarEventsRequestProto request) {
-        log.info("Запрос похожих событий для eventId: {}, для пользователя: {}", request.getEventId(), request.getUserId());
+        log.info("Поиск похожих событий для eventId={}, userId={}", request.getEventId(), request.getUserId());
 
-        List<Similarity> similarities = similarityRepository.findAnySimilar(request.getEventId());
-        log.debug("Найдено похожих пар в БД: {}", similarities.size());
+        List<Similarity> similarities = similarityRepository.findByEventIds(List.of(request.getEventId()));
+        if (similarities.isEmpty()) {
+            log.debug("Похожих событий для {} не найдено", request.getEventId());
+            return List.of();
+        }
 
-        Set<Long> userHistory = interactionRepository.findAllByUserId(request.getUserId())
-                .stream().map(Interaction::getEventId).collect(Collectors.toSet());
+        Set<Long> userInteracted = (request.getUserId() != 0)
+                ? interactionRepository.findAllByUserId(request.getUserId()).stream()
+                .map(Interaction::getEventId).collect(Collectors.toSet())
+                : Collections.emptySet();
 
         List<RecommendedEventProto> result = similarities.stream()
-                .map(s -> {
-                    long targetId = s.getEventA().equals(request.getEventId()) ? s.getEventB() : s.getEventA();
-                    return Map.entry(targetId, (float) s.getScore());
-                })
-                .filter(e -> !userHistory.contains(e.getKey()))
-                .sorted(Map.Entry.<Long, Float>comparingByValue().reversed())
+                .map(s -> new AbstractMap.SimpleEntry<>(s.getOtherEventId(request.getEventId()), s.getSimilarity()))
+                .filter(entry -> !userInteracted.contains(entry.getKey()))
+                .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
                 .limit(request.getMaxResults())
-                .map(e -> RecommendedEventProto.newBuilder()
-                        .setEventId(e.getKey())
-                        .setScore(e.getValue())
-                        .build())
+                .map(entry -> toProto(entry.getKey(), entry.getValue().floatValue()))
                 .toList();
 
-        log.info("Возвращаю {} похожих событий", result.size());
+        log.debug("Для события {} найдено {} похожих вариантов после фильтрации", request.getEventId(), result.size());
         return result;
     }
 
     public List<RecommendedEventProto> getInteractionsCount(InteractionsCountRequestProto request) {
-        List<Long> ids = request.getEventIdList();
-        log.info("Запрос суммы взаимодействий для мероприятий: {}", ids);
+        log.info("Запрос суммы взаимодействий для {} событий", request.getEventIdCount());
 
-        if (ids.isEmpty()) return List.of();
+        List<Interaction> allInteractions = interactionRepository.findAllByEventIdIn(request.getEventIdList());
+        log.debug("Для списка событий получено {} взаимодействий из БД", allInteractions.size());
 
-        List<Object[]> rawData = interactionRepository.sumRatingsByEventIds(ids);
+        Map<Long, List<Interaction>> grouped = allInteractions.stream()
+                .collect(Collectors.groupingBy(Interaction::getEventId));
 
-        // Используем ((Number) row[1]).doubleValue() для безопасного приведения
-        Map<Long, Double> results = rawData.stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> ((Number) row[1]).doubleValue(),
-                        (a, b) -> a
-                ));
+        return request.getEventIdList().stream()
+                .distinct()
+                .map(id -> toProto(id, calculateScoreForEvent(grouped.getOrDefault(id, List.of()))))
+                .sorted(Comparator.comparing(RecommendedEventProto::getScore).reversed())
+                .toList();
+    }
 
-        return ids.stream().map(id -> {
-                    // В Proto score — это float, поэтому здесь конвертируем в floatValue()
-                    float score = results.getOrDefault(id, 0.0).floatValue();
-                    log.debug("Событие ID: {}, итоговый score: {}", id, score);
-                    return RecommendedEventProto.newBuilder()
-                            .setEventId(id)
-                            .setScore(score)
-                            .build();
-                }
-        ).toList();
+    private float calculateScoreForEvent(List<Interaction> interactions) {
+        try {
+            return (float) interactions.stream()
+                    .collect(Collectors.groupingBy(Interaction::getUserId,
+                            Collectors.collectingAndThen(Collectors.maxBy(Comparator.comparing(Interaction::getRating)),
+                                    opt -> opt.map(Interaction::getRating).orElse(0.0))))
+                    .values().stream().mapToDouble(Double::doubleValue).sum();
+        } catch (Exception e) {
+            log.error("Ошибка при расчете скоринга для списка взаимодействий размером {}", interactions.size(), e);
+            return 0.0f;
+        }
+    }
+
+    private RecommendedEventProto toProto(Long id, float score) {
+        return RecommendedEventProto.newBuilder().setEventId(id).setScore(score).build();
     }
 }

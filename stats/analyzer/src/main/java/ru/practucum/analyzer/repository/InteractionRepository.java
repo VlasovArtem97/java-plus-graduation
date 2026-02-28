@@ -5,24 +5,26 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ru.practucum.analyzer.model.Interaction;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 public interface InteractionRepository extends JpaRepository<Interaction, Long> {
 
-    Optional<Interaction> findByEventIdAndUserId(Long eventId, Long userId);
+//    Optional<Interaction> findByUserIdAndEventId(Long userId, Long eventId);
+//
+//    boolean existsByUserIdAndEventId(Long userId, Long eventId);
+//
+//    List<Interaction> findAllByUserId(Long userId);
+//
+    List<Interaction> findAllByEventIdIn(Collection<Long> eventIds);
 
-    @Query(value = "SELECT * FROM interactions WHERE user_id = :u ORDER BY timestamp DESC LIMIT :l", nativeQuery = true)
-    List<Interaction> findRecent(@Param("u") Long userId, @Param("l") int limit);
+    Optional<Interaction> findByUserIdAndEventId(Long userId, Long eventId);
 
+    boolean existsByUserIdAndEventId(Long userId, Long eventId);
 
-    @Query(value = "SELECT event_id, SUM(max_rating) FROM (" +
-            "  SELECT event_id, user_id, MAX(rating) as max_rating " +
-            "  FROM interactions " +
-            "  WHERE event_id IN :ids " +
-            "  GROUP BY event_id, user_id" +
-            ") as subquery GROUP BY event_id", nativeQuery = true)
-    List<Object[]> sumRatingsByEventIds(@Param("ids") List<Long> eventIds);
+    List<Interaction> findAllByUserId(Long userId);
 
-    List<Interaction> findAllByUserId(long userId);
+    List<Interaction> findAllByEventId(Long eventId);
+
 }

@@ -32,8 +32,8 @@ grpc:
 
 logging:
   level:
-    ru.practicum.collector: DEBUG
-    org.apache.kafka: DEBUG
+    ru.practucum.analyzer: DEBUG
+    org.apache.kafka: INFO
 
 management:
   endpoints:

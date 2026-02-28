@@ -18,7 +18,6 @@ public class AggregationService {
     private static final double WEIGHT_LIKE = 1.0;
 
     private final Map<Long, Map<Long, Double>> eventUserWeights = new HashMap<>();
-    private final Map<Long, Set<Long>> userEventsHistory = new HashMap<>();
     private final Map<Long, Double> eventTotalWeights = new HashMap<>();
     private final Map<Long, Map<Long, Double>> minWeightsSums = new HashMap<>();
 
@@ -28,85 +27,137 @@ public class AggregationService {
 
         long eventId = actionAvro.getEventId();
         long userId = actionAvro.getUserId();
-        Instant instant = actionAvro.getTimestamp();
+        Instant timestamp = actionAvro.getTimestamp();
+        double weight = getWeightByAction(actionAvro.getActionType());
 
-        double newWeight = getWeightByAction(actionAvro.getActionType());
+        Double currentMaxWeight = eventUserWeights
+                .computeIfAbsent(eventId, k -> new HashMap<>())
+                .get(userId);
 
-        Map<Long, Double> userWeights = eventUserWeights.computeIfAbsent(eventId, e -> new HashMap<>());
-        double oldMaxWeight = userWeights.getOrDefault(userId, 0.0);
 
-        if (newWeight <= oldMaxWeight) {
-            log.info("Пропуск обработки: новый вес {} не больше старого макс. веса {} для пользователя {} и события {}",
-                    newWeight, oldMaxWeight, userId, eventId);
+        if (currentMaxWeight != null && weight <= currentMaxWeight) {
+            log.debug("Weight not changed or decreased for userId={}, eventId={}", userId, eventId);
             return Collections.emptyList();
         }
 
-        log.debug("Обновление веса для пользователя {} по событию {}: {} -> {}", userId, eventId, oldMaxWeight, newWeight);
-        userWeights.put(userId, newWeight);
+        // Обновляем максимальный вес
+        double previousWeight = currentMaxWeight != null ? currentMaxWeight : 0.0;
+        eventUserWeights.get(eventId).put(userId, weight);
 
-        userEventsHistory.computeIfAbsent(userId, u -> new HashSet<>()).add(eventId);
+        // Обновляем суммы весов для мероприятия
+        updateEventTotalWeight(eventId, weight, previousWeight);
 
-        double deltaWeight = newWeight - oldMaxWeight;
+        // Обновляем суммы минимальных весов с другими мероприятиями
+        return updateAndCalculateSimilarities(eventId, userId, weight, previousWeight, timestamp);
+    }
+
+    private void updateEventTotalWeight(long eventId, double newWeight, double previousWeight) {
         double currentTotal = eventTotalWeights.getOrDefault(eventId, 0.0);
-        eventTotalWeights.put(eventId, currentTotal + deltaWeight);
+        double updatedTotal = currentTotal - previousWeight + newWeight;
+        eventTotalWeights.put(eventId, updatedTotal);
 
-        log.debug("Общий вес события {} обновлен: {} -> {}", eventId, currentTotal, eventTotalWeights.get(eventId));
+        log.debug("Updated total weight for event {}: {} -> {}", eventId, currentTotal, updatedTotal);
+    }
 
-        List<EventSimilarityAvro> similarities = updateSimilarities(userId, eventId, oldMaxWeight, newWeight, instant);
-        log.info("Сгенерировано {} обновлений сходства для события {}", similarities.size(), eventId);
+    private List<EventSimilarityAvro> updateAndCalculateSimilarities(
+            long updatedEventId, long userId, double newWeight, double previousWeight,
+            Instant timestamp) {
 
+        List<EventSimilarityAvro> similarities = new ArrayList<>();
+
+        // Находим все мероприятия, с которыми взаимодействовал данный пользователь
+        for (Map.Entry<Long, Map<Long, Double>> entry : eventUserWeights.entrySet()) {
+            long otherEventId = entry.getKey();
+
+            // Пропускаем то же самое мероприятие
+            if (otherEventId == updatedEventId) {
+                continue;
+            }
+
+            // Проверяем, взаимодействовал ли пользователь с другим мероприятием
+            Double otherWeight = entry.getValue().get(userId);
+            if (otherWeight == null) {
+                continue; // Пользователь не взаимодействовал с другим мероприятием
+            }
+
+            // Обновляем сумму минимальных весов для пары мероприятий
+            double minWeightDelta = calculateMinWeightDelta(newWeight, previousWeight, otherWeight);
+            if (minWeightDelta != 0) {
+                updateMinWeightSum(updatedEventId, otherEventId, minWeightDelta);
+            }
+
+            // Пересчитываем сходство после обновления
+            double similarity = calculateSimilarity(updatedEventId, otherEventId);
+            if (similarity > 0) {
+                similarities.add(createEventSimilarity(updatedEventId, otherEventId, similarity, timestamp));
+                log.debug("Added similarity for pair ({}, {}): {}", updatedEventId, otherEventId, similarity);
+            }
+
+
+        }
+        log.info("Generated {} similarity updates for event {}", similarities.size(), updatedEventId);
+        // Возвращаем первое обновленное сходство (или пустое, если ничего не изменилось)
         return similarities;
     }
 
-    private List<EventSimilarityAvro> updateSimilarities(long userId, long currentEventId, double oldWeight,
-                                                         double newWeight, Instant timestamp) {
-        Set<Long> otherEventsIds = userEventsHistory.getOrDefault(userId, Collections.emptySet());
-        log.debug("У пользователя {} в истории {} событий. Расчет обновлений сходства...", userId, otherEventsIds.size());
-
-        return otherEventsIds.stream()
-                .filter(otherId -> !otherId.equals(currentEventId))
-                .map(otherId -> {
-                    double weightInOther = eventUserWeights.get(otherId).get(userId);
-                    double deltaMinSum = Math.min(newWeight, weightInOther) - Math.min(oldWeight, weightInOther);
-
-                    if (deltaMinSum != 0) {
-                        log.trace("Обновление S_min для пары ({}, {}), дельта={}", currentEventId, otherId, deltaMinSum);
-                        updateMinWeightsSum(currentEventId, otherId, deltaMinSum);
-
-                        double score = calculateCosineSimilarity(currentEventId, otherId);
-                        log.debug("Новый коэффициент сходства для ({}, {}): {}", currentEventId, otherId, score);
-
-                        return getEventSimilarityAvro(currentEventId, otherId, score, timestamp);
-                    }
-                    return null;
-                })
-                .filter(Objects::nonNull)
-                .toList();
+    private double calculateMinWeightDelta(double newWeight, double previousWeight, double otherWeight) {
+        double previousMin = Math.min(previousWeight, otherWeight);
+        double newMin = Math.min(newWeight, otherWeight);
+        return newMin - previousMin;
     }
 
-    private void updateMinWeightsSum(long eventA, long eventB, double delta) {
+    private void updateMinWeightSum(long eventA, long eventB, double delta) {
         long first = Math.min(eventA, eventB);
         long second = Math.max(eventA, eventB);
 
-        Map<Long, Double> internalMap = minWeightsSums.computeIfAbsent(first, e -> new HashMap<>());
-        double currentSMin = internalMap.getOrDefault(second, 0.0);
-        internalMap.put(second, currentSMin + delta);
+        double currentSum = minWeightsSums
+                .computeIfAbsent(first, k -> new HashMap<>())
+                .getOrDefault(second, 0.0);
+
+        minWeightsSums
+                .computeIfAbsent(first, k -> new HashMap<>())
+                .put(second, currentSum + delta);
+
+        log.debug("Updated min weight sum for pair ({}, {}): {} -> {}", first, second, currentSum, currentSum + delta);
     }
 
-    private double calculateCosineSimilarity(long eventA, long eventB) {
+    private double calculateSimilarity(long eventA, long eventB) {
         long first = Math.min(eventA, eventB);
         long second = Math.max(eventA, eventB);
 
-        double sMin = minWeightsSums.getOrDefault(first, Collections.emptyMap()).getOrDefault(second, 0.0);
-        double sA = eventTotalWeights.getOrDefault(eventA, 0.0);
-        double sB = eventTotalWeights.getOrDefault(eventB, 0.0);
+        Double sMin = minWeightsSums
+                .computeIfAbsent(first, k -> new HashMap<>())
+                .get(second);
 
-        if (sA == 0 || sB == 0) {
-            log.warn("Ошибка расчета: sA={} или sB={} равны нулю. Возвращаю результат 0.0", sA, sB);
+        if (sMin == null || sMin == 0) {
             return 0.0;
         }
 
-        return sMin / (Math.sqrt(sA) * Math.sqrt(sB));
+        Double sA = eventTotalWeights.get(eventA);
+        Double sB = eventTotalWeights.get(eventB);
+
+        if (sA == null || sB == null || sA == 0 || sB == 0) {
+            return 0.0;
+        }
+
+        double similarity = sMin / (Math.sqrt(sA) * Math.sqrt(sB));
+        log.debug("Calculated similarity for ({}, {}): sMin={}, sA={}, sB={}, similarity={}",
+                eventA, eventB, sMin, sA, sB, similarity);
+
+        return similarity;
+    }
+
+    private EventSimilarityAvro createEventSimilarity(long eventA, long eventB,
+                                                      double similarity, Instant timestamp) {
+        long first = Math.min(eventA, eventB);
+        long second = Math.max(eventA, eventB);
+
+        return EventSimilarityAvro.newBuilder()
+                .setEventA(first)
+                .setEventB(second)
+                .setScore(similarity)
+                .setTimestamp(timestamp)
+                .build();
     }
 
     private double getWeightByAction(ActionTypeAvro avro) {
@@ -119,17 +170,5 @@ public class AggregationService {
                 throw new IllegalStateException("Некорректно указан тип действия пользователя(UserAction)");
             }
         };
-    }
-
-    private EventSimilarityAvro getEventSimilarityAvro(long idA, long idB, double score, Instant timestamp) {
-        long eventA = Math.min(idA, idB);
-        long eventB = Math.max(idA, idB);
-
-        return EventSimilarityAvro.newBuilder()
-                .setEventA(eventA)
-                .setEventB(eventB)
-                .setScore(score)
-                .setTimestamp(timestamp)
-                .build();
     }
 }

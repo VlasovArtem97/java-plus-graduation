@@ -32,8 +32,8 @@ public class Interaction {
     private Long userId;
 
     @Column(name = "rating", nullable = false)
-    private float rating;
+    private Double rating;
 
     @Column(name = "timestamp", nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private Instant instant;
+    private Instant timestamp;
 }

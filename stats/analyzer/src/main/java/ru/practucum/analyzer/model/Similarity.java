@@ -15,7 +15,7 @@ import java.time.Instant;
 @Table(name = "similarities", uniqueConstraints = {
         @UniqueConstraint(
                 name = "unique_event_pair",
-                columnNames = {"event_a", "event_b"}
+                columnNames = {"event1", "event2"}
         )
 })
 @ToString
@@ -25,15 +25,19 @@ public class Similarity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "event_a", nullable = false)
-    private Long eventA;
+    @Column(name = "event1", nullable = false)
+    private Long event1;
 
-    @Column(name = "event_b", nullable = false)
-    private Long eventB;
+    @Column(name = "event2", nullable = false)
+    private Long event2;
 
     @Column(name = "score", nullable = false)
-    private double score;
+    private Double similarity;
 
     @Column(name = "timestamp", nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private Instant instant;
+    private Instant timestamp;
+
+    public Long getOtherEventId(Long targetEventId) {
+        return event1.equals(targetEventId) ? event2 : event1;
+    }
 }

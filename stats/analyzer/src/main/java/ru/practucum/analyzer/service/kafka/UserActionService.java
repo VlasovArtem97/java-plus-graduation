@@ -20,23 +20,23 @@ public class UserActionService {
 
     private final InteractionRepository interactionRepository;
 
-    private static final float WEIGHT_VIEW = 0.4f;
-    private static final float WEIGHT_REGISTER = 0.8f;
-    private static final float WEIGHT_LIKE = 1.0f;
+    private static final double WEIGHT_VIEW = 0.4;
+    private static final double WEIGHT_REGISTER = 0.8;
+    private static final double WEIGHT_LIKE = 1.0;
 
     @Transactional
     public void saveUserAction(UserActionAvro avro) {
         log.info("Начинается процесс по сохранению действий пользователя");
         validate(avro);
-        float rating = getWeightByAction(avro.getActionType());
-        Optional<Interaction> interaction = interactionRepository.findByEventIdAndUserId(avro.getEventId(),
+        double rating = getWeightByAction(avro.getActionType());
+        Optional<Interaction> interaction = interactionRepository.findByUserIdAndEventId(avro.getEventId(),
                 avro.getUserId());
         if (interaction.isEmpty()) {
             log.debug("Запись взаимодействия пользователя с мероприятием не найдена. создается новая запись");
             interactionRepository.save(Interaction.builder()
                     .userId(avro.getUserId())
                     .eventId(avro.getEventId())
-                    .instant(avro.getTimestamp())
+                    .timestamp(avro.getTimestamp())
                     .rating(rating)
                     .build());
             log.debug("Запись взаимодействия пользователя с мероприятием успешно сохранено");
@@ -44,7 +44,7 @@ public class UserActionService {
             log.debug("найдена запись взаимодействия пользователя с мероприятием: {}", interaction);
             Interaction oldInteraction = interaction.get();
             oldInteraction.setRating(rating);
-            oldInteraction.setInstant(avro.getTimestamp());
+            oldInteraction.setTimestamp(avro.getTimestamp());
             interactionRepository.save(oldInteraction);
             log.debug("Запись взаимодействия пользователя с мероприятием успешно обновлена");
         }
@@ -71,7 +71,7 @@ public class UserActionService {
         }
     }
 
-    private float getWeightByAction(ActionTypeAvro avro) {
+    private double getWeightByAction(ActionTypeAvro avro) {
         return switch (avro) {
             case ActionTypeAvro.LIKE -> WEIGHT_LIKE;
             case ActionTypeAvro.REGISTER -> WEIGHT_REGISTER;

@@ -10,8 +10,8 @@ kafka:
 
 logging:
   level:
-    ru.practicum.collector: DEBUG
-    org.apache.kafka: DEBUG
+    ru.practicum.aggregator: DEBUG
+    org.apache.kafka: INFO
 
 management:
   endpoints:
