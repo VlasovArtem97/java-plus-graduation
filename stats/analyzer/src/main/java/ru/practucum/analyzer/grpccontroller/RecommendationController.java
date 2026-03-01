@@ -42,8 +42,10 @@ public class RecommendationController extends RecommendationsControllerGrpc.Reco
         try {
             List<RecommendedEventProto> results = serviceCall.get();
             for (RecommendedEventProto event : results) {
+                log.debug("Отправляю объект после запроса: {}", event);
                 responseObserver.onNext(event);
             }
+            log.debug("Все объекты отправлены после обработки запроса");
             responseObserver.onCompleted();
         } catch (IllegalStateException e) {
             log.error("Ошибка в валидации данных: {}", e.getMessage());

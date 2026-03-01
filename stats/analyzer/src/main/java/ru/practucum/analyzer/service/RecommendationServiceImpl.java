@@ -23,8 +23,6 @@ public class RecommendationServiceImpl implements RecommendationService {
     private final SimilarityRepository similarityRepository;
     private final InteractionRepository interactionRepository;
 
-    private static final int K_NEIGHBORS = 10;
-
     public List<RecommendedEventProto> getRecommendationsForUser(UserPredictionsRequestProto request) {
         Long userId = request.getUserId();
         log.info("Запрос рекомендаций для userId={}, maxResults={}", userId, request.getMaxResults());
@@ -34,13 +32,13 @@ public class RecommendationServiceImpl implements RecommendationService {
             log.debug("Для пользователя {} нет истории взаимодействий", userId);
             return List.of();
         }
-        log.debug("Найдено {} взаимодействий для пользователя {}", userInteractions.size(), userId);
+        log.debug("Найдены взаимодействий {} для пользователя {}", userInteractions, userId);
 
         Set<Long> interactedIds = userInteractions.stream()
                 .map(Interaction::getEventId).collect(Collectors.toSet());
 
         List<Similarity> similarities = similarityRepository.findByEventIds(interactedIds);
-        log.debug("Из БД получено {} записей о сходстве для пользователя {}", similarities.size(), userId);
+        log.debug("Из БД получены записи: {} о сходстве для пользователя {}", similarities, userId);
 
         Map<Long, Double> candidates = new HashMap<>();
         for (Similarity sim : similarities) {
@@ -58,10 +56,10 @@ public class RecommendationServiceImpl implements RecommendationService {
         List<RecommendedEventProto> result = candidates.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
                 .limit(request.getMaxResults())
-                .map(e -> toProto(e.getKey(), e.getValue().floatValue()))
+                .map(e -> toProto(e.getKey(), e.getValue()))
                 .toList();
 
-        log.info("Успешно сформировано {} рекомендаций для пользователя {}", result.size(), userId);
+        log.info("Успешно сформировано рекомендации: {} для пользователя {}", result, userId);
         return result;
     }
 
@@ -84,43 +82,45 @@ public class RecommendationServiceImpl implements RecommendationService {
                 .filter(entry -> !userInteracted.contains(entry.getKey()))
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
                 .limit(request.getMaxResults())
-                .map(entry -> toProto(entry.getKey(), entry.getValue().floatValue()))
+                .map(entry -> toProto(entry.getKey(), entry.getValue()))
                 .toList();
 
-        log.debug("Для события {} найдено {} похожих вариантов после фильтрации", request.getEventId(), result.size());
+        log.debug("Для события {} найдены {} похожих вариантов после фильтрации", request.getEventId(), result);
         return result;
     }
 
     public List<RecommendedEventProto> getInteractionsCount(InteractionsCountRequestProto request) {
-        log.info("Запрос суммы взаимодействий для {} событий", request.getEventIdCount());
+        log.info("Запрос суммы взаимодействий для события: {}", request);
 
         List<Interaction> allInteractions = interactionRepository.findAllByEventIdIn(request.getEventIdList());
-        log.debug("Для списка событий получено {} взаимодействий из БД", allInteractions.size());
+        log.debug("Для списка событий получены взаимодействия из БД: {}", allInteractions);
 
         Map<Long, List<Interaction>> grouped = allInteractions.stream()
                 .collect(Collectors.groupingBy(Interaction::getEventId));
 
-        return request.getEventIdList().stream()
+        List <RecommendedEventProto> recommendedEventProtos = request.getEventIdList().stream()
                 .distinct()
                 .map(id -> toProto(id, calculateScoreForEvent(grouped.getOrDefault(id, List.of()))))
                 .sorted(Comparator.comparing(RecommendedEventProto::getScore).reversed())
                 .toList();
+        log.debug("Возвращенный объект с событиями: {}", recommendedEventProtos);
+        return recommendedEventProtos;
     }
 
-    private float calculateScoreForEvent(List<Interaction> interactions) {
+    private double calculateScoreForEvent(List<Interaction> interactions) {
         try {
-            return (float) interactions.stream()
+            return interactions.stream()
                     .collect(Collectors.groupingBy(Interaction::getUserId,
                             Collectors.collectingAndThen(Collectors.maxBy(Comparator.comparing(Interaction::getRating)),
                                     opt -> opt.map(Interaction::getRating).orElse(0.0))))
                     .values().stream().mapToDouble(Double::doubleValue).sum();
         } catch (Exception e) {
             log.error("Ошибка при расчете скоринга для списка взаимодействий размером {}", interactions.size(), e);
-            return 0.0f;
+            return 0.0;
         }
     }
 
-    private RecommendedEventProto toProto(Long id, float score) {
+    private RecommendedEventProto toProto(Long id, double score) {
         return RecommendedEventProto.newBuilder().setEventId(id).setScore(score).build();
     }
 }

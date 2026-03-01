@@ -31,20 +31,20 @@ public class EventSimilarService {
 
         if (similarity.isEmpty()) {
             log.debug("Не было найдено схожесть мероприятий");
-            similarityRepository.save(Similarity.builder()
+            Similarity similarity1 = similarityRepository.save(Similarity.builder()
                     .event1(eventA)
                     .event2(eventB)
                     .timestamp(avro.getTimestamp())
                     .similarity(score)
                     .build());
-            log.debug("Схожесть мероприятий успешно сохранено");
+            log.debug("Схожесть мероприятий успешно сохранено: {}", similarity1);
         } else {
             Similarity updateSimilarity = similarity.get();
             log.debug("Схожесть мероприятий найдена: {}", updateSimilarity);
             updateSimilarity.setSimilarity(score);
             updateSimilarity.setTimestamp(avro.getTimestamp());
-            similarityRepository.save(updateSimilarity);
-            log.debug("Запись схожести мероприятия успешно обновлена");
+            Similarity similarity1 = similarityRepository.save(updateSimilarity);
+            log.debug("Запись схожести мероприятия успешно обновлена: {}", similarity1);
         }
     }
 

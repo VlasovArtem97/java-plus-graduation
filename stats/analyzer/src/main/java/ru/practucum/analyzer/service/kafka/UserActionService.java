@@ -29,24 +29,28 @@ public class UserActionService {
         log.info("Начинается процесс по сохранению действий пользователя");
         validate(avro);
         double rating = getWeightByAction(avro.getActionType());
-        Optional<Interaction> interaction = interactionRepository.findByUserIdAndEventId(avro.getEventId(),
-                avro.getUserId());
+        Optional<Interaction> interaction = interactionRepository.findByUserIdAndEventId(avro.getUserId(),
+                avro.getEventId());
         if (interaction.isEmpty()) {
             log.debug("Запись взаимодействия пользователя с мероприятием не найдена. создается новая запись");
-            interactionRepository.save(Interaction.builder()
+            Interaction interaction1 = interactionRepository.save(Interaction.builder()
                     .userId(avro.getUserId())
                     .eventId(avro.getEventId())
                     .timestamp(avro.getTimestamp())
                     .rating(rating)
                     .build());
-            log.debug("Запись взаимодействия пользователя с мероприятием успешно сохранено");
+            log.debug("Запись взаимодействия пользователя с мероприятием успешно сохранено: {}", interaction1);
         } else {
             log.debug("найдена запись взаимодействия пользователя с мероприятием: {}", interaction);
             Interaction oldInteraction = interaction.get();
+            if(oldInteraction.getRating() > rating) {
+                log.warn("коэффициент нового взаимодействия ниже, чем сохраненный. Запись не обновляется");
+                return;
+            }
             oldInteraction.setRating(rating);
             oldInteraction.setTimestamp(avro.getTimestamp());
-            interactionRepository.save(oldInteraction);
-            log.debug("Запись взаимодействия пользователя с мероприятием успешно обновлена");
+            Interaction interaction1 = interactionRepository.save(oldInteraction);
+            log.debug("Запись взаимодействия пользователя с мероприятием успешно обновлена: {}", interaction1);
         }
     }
 
