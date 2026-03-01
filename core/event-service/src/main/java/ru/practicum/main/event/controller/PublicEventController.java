@@ -26,6 +26,8 @@ public class PublicEventController {
     private final EventService eventService;
     private final EventWithRequest eventWithRequest;
 
+    public static final String HEADER_USER_ID = "X-EWM-USER-ID";
+
     @GetMapping
     public List<EventShortDto> findEventByParamsPublic(@RequestParam(required = false) String text,
                                                        @RequestParam(required = false) List<Long> categories,
@@ -52,14 +54,14 @@ public class PublicEventController {
     }
 
     @GetMapping("/{eventId}")
-    public EventFullDto findPublicEventById(@Positive @NotNull @RequestHeader("X-EWM-USER-ID") Long userId,
+    public EventFullDto findPublicEventById(@Positive @NotNull @RequestHeader(HEADER_USER_ID) Long userId,
                                             @PathVariable @Positive @NotNull Long eventId,
                                             HttpServletRequest request) {
         return eventService.findPublicEventById(userId, eventId, request);
     }
 
     @GetMapping("/recommendations")
-    List<EventShortDto> getRecommendations(@Positive @NotNull @RequestHeader("X-EWM-USER-ID") Long userId,
+    List<EventShortDto> getRecommendations(@Positive @NotNull @RequestHeader(HEADER_USER_ID) Long userId,
                                            @Positive @RequestParam(defaultValue = "10") int size) {
         return eventService.getRecommendations(userId, size);
     }
@@ -67,7 +69,7 @@ public class PublicEventController {
     @PutMapping("/{eventId}/like")
     public void likeEvent(
             @Positive @NotNull @PathVariable Long eventId,
-            @Positive @NotNull @RequestHeader("X-EWM-USER-ID") Long userId) {
+            @Positive @NotNull @RequestHeader(HEADER_USER_ID) Long userId) {
         eventWithRequest.likeEvent(eventId, userId);
     }
 }

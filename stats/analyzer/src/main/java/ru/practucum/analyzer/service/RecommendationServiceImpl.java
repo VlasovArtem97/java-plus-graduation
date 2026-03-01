@@ -3,6 +3,7 @@ package ru.practucum.analyzer.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.stats.proto.messages.InteractionsCountRequestProto;
 import ru.practicum.ewm.stats.proto.messages.RecommendedEventProto;
 import ru.practicum.ewm.stats.proto.messages.SimilarEventsRequestProto;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class RecommendationServiceImpl implements RecommendationService {
 
     private final SimilarityRepository similarityRepository;
@@ -98,7 +100,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         Map<Long, List<Interaction>> grouped = allInteractions.stream()
                 .collect(Collectors.groupingBy(Interaction::getEventId));
 
-        List <RecommendedEventProto> recommendedEventProtos = request.getEventIdList().stream()
+        List<RecommendedEventProto> recommendedEventProtos = request.getEventIdList().stream()
                 .distinct()
                 .map(id -> toProto(id, calculateScoreForEvent(grouped.getOrDefault(id, List.of()))))
                 .sorted(Comparator.comparing(RecommendedEventProto::getScore).reversed())

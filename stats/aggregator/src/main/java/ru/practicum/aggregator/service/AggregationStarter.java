@@ -35,12 +35,11 @@ public class AggregationStarter {
     @Value("${kafka.topicEventsSimilarity}")
     private String topicEventsSimilarity;
 
-    //флаг для остановки producer и consumer
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
     public void start() {
 
-        log.info("Начинается работа по получению данных из топика: {} kafka", topicUserAction);
+        log.info("Начинается работа по получению данных в Aggregator из топика: {} kafka", topicUserAction);
         try {
             consumer.subscribe(List.of(topicUserAction));
             while (!closed.get()) {
@@ -54,18 +53,14 @@ public class AggregationStarter {
                 consumer.commitSync();
             }
         } catch (WakeupException ignored) {
-            if (!closed.get()) {
-                throw ignored;
-            }
-            log.info("Консьюмер разбужен и завершает работу.");
+            log.error("Приложение завершает работу по команде Wakeup");
         } catch (Exception e) {
-            log.error("Ошибка во время обработки действий пользователей", e);
+            log.error("Ошибка во время обработки сообщений из Kafka", e);
         } finally {
             log.debug("Начинается закрытие producer и consumer");
             consumer.close(Duration.ofSeconds(10));
             producer.flush();
             producer.close();
-
         }
     }
 
@@ -87,13 +82,13 @@ public class AggregationStarter {
             }
             producer.flush();
         } else {
-            log.debug("Данные не были обновлены");
+            log.warn("Данные не были обновлены");
         }
     }
 
     @PreDestroy
     public void stop() {
-        log.info("Остановка AggregationStarter...");
+        log.info("Остановка Aggregator");
         closed.set(true);
         consumer.wakeup();
     }

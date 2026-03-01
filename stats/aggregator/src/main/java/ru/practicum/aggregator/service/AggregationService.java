@@ -22,8 +22,7 @@ public class AggregationService {
     private final Map<Long, Map<Long, Double>> minWeightsSums = new HashMap<>();
 
     public List<EventSimilarityAvro> processEvent(UserActionAvro actionAvro) {
-        log.info("Обработка события из Kafka: userId={}, eventId={}, action={}",
-                actionAvro.getUserId(), actionAvro.getEventId(), actionAvro.getActionType());
+        log.info("Начинается процесс обработки сообщения от кафки в Aggregator: {}", actionAvro);
 
         long eventId = actionAvro.getEventId();
         long userId = actionAvro.getUserId();
@@ -36,67 +35,60 @@ public class AggregationService {
 
 
         if (currentMaxWeight != null && weight <= currentMaxWeight) {
-            log.debug("Weight not changed or decreased for userId={}, eventId={}", userId, eventId);
+            log.debug("Увеличение коэффициента веса не увеличилось. Сохраненный вес: {}. Вес в запросе: {}",
+                    currentMaxWeight, weight);
             return Collections.emptyList();
         }
 
-        // Обновляем максимальный вес
         double previousWeight = currentMaxWeight != null ? currentMaxWeight : 0.0;
         eventUserWeights.get(eventId).put(userId, weight);
 
-        // Обновляем суммы весов для мероприятия
         updateEventTotalWeight(eventId, weight, previousWeight);
 
-        // Обновляем суммы минимальных весов с другими мероприятиями
         return updateAndCalculateSimilarities(eventId, userId, weight, previousWeight, timestamp);
     }
 
     private void updateEventTotalWeight(long eventId, double newWeight, double previousWeight) {
+        log.debug("Начинается обновление общего веса мероприятия: {}", eventId);
         double currentTotal = eventTotalWeights.getOrDefault(eventId, 0.0);
         double updatedTotal = currentTotal - previousWeight + newWeight;
         eventTotalWeights.put(eventId, updatedTotal);
 
-        log.debug("Updated total weight for event {}: {} -> {}", eventId, currentTotal, updatedTotal);
+        log.debug("Вес мероприятия изменился. Было: {}. Стало: {}", currentTotal, updatedTotal);
     }
 
-    private List<EventSimilarityAvro> updateAndCalculateSimilarities(
-            long updatedEventId, long userId, double newWeight, double previousWeight,
-            Instant timestamp) {
-
+    private List<EventSimilarityAvro> updateAndCalculateSimilarities(long updatedEventId, long userId, double newWeight,
+                                                                     double previousWeight, Instant timestamp) {
+        log.debug("Начинается процесс обновления схожести мероприятия: {} c другими мероприятиями.", updatedEventId);
         List<EventSimilarityAvro> similarities = new ArrayList<>();
 
-        // Находим все мероприятия, с которыми взаимодействовал данный пользователь
         for (Map.Entry<Long, Map<Long, Double>> entry : eventUserWeights.entrySet()) {
             long otherEventId = entry.getKey();
 
-            // Пропускаем то же самое мероприятие
             if (otherEventId == updatedEventId) {
                 continue;
             }
 
-            // Проверяем, взаимодействовал ли пользователь с другим мероприятием
             Double otherWeight = entry.getValue().get(userId);
             if (otherWeight == null) {
-                continue; // Пользователь не взаимодействовал с другим мероприятием
+                continue;
             }
 
-            // Обновляем сумму минимальных весов для пары мероприятий
             double minWeightDelta = calculateMinWeightDelta(newWeight, previousWeight, otherWeight);
             if (minWeightDelta != 0) {
                 updateMinWeightSum(updatedEventId, otherEventId, minWeightDelta);
             }
 
-            // Пересчитываем сходство после обновления
             double similarity = calculateSimilarity(updatedEventId, otherEventId);
             if (similarity > 0) {
                 similarities.add(createEventSimilarity(updatedEventId, otherEventId, similarity, timestamp));
-                log.debug("Added similarity for pair ({}, {}): {}", updatedEventId, otherEventId, similarity);
+                log.debug("Добавлено сходство мероприятий: Наше мероприятие: {}. Другое мероприятие: {}. Коэффициент: {}",
+                        updatedEventId, otherEventId, similarity);
             }
 
 
         }
-        log.info("Generated {} similarity updates for event {}", similarities.size(), updatedEventId);
-        // Возвращаем первое обновленное сходство (или пустое, если ничего не изменилось)
+        log.info("Обновленный список схожести мероприятий: {}", similarities);
         return similarities;
     }
 
@@ -107,6 +99,7 @@ public class AggregationService {
     }
 
     private void updateMinWeightSum(long eventA, long eventB, double delta) {
+        log.debug("Начинается процесс обновления минимальных весов мероприятий");
         long first = Math.min(eventA, eventB);
         long second = Math.max(eventA, eventB);
 
@@ -118,10 +111,11 @@ public class AggregationService {
                 .computeIfAbsent(first, k -> new HashMap<>())
                 .put(second, currentSum + delta);
 
-        log.debug("Updated min weight sum for pair ({}, {}): {} -> {}", first, second, currentSum, currentSum + delta);
+        log.debug("Обновленная сумма минимальных весов: {}", currentSum + delta);
     }
 
     private double calculateSimilarity(long eventA, long eventB) {
+        log.debug("Начинается подсчет сходства мероприятий: {} и {}", eventA, eventB);
         long first = Math.min(eventA, eventB);
         long second = Math.max(eventA, eventB);
 
@@ -141,8 +135,7 @@ public class AggregationService {
         }
 
         double similarity = sMin / (Math.sqrt(sA) * Math.sqrt(sB));
-        log.debug("Calculated similarity for ({}, {}): sMin={}, sA={}, sB={}, similarity={}",
-                eventA, eventB, sMin, sA, sB, similarity);
+        log.debug("Схожесть мероприятий: {}", similarity);
 
         return similarity;
     }

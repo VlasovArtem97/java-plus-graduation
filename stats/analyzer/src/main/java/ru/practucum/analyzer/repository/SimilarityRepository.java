@@ -11,8 +11,8 @@ import java.util.Optional;
 
 public interface SimilarityRepository extends JpaRepository<Similarity, Long> {
 
-@Query("SELECT s FROM Similarity s WHERE s.event1 IN :ids OR s.event2 IN :ids")
-List<Similarity> findByEventIds(@Param("ids") Collection<Long> eventIds);
+    @Query("SELECT s FROM Similarity s WHERE s.event1 IN :ids OR s.event2 IN :ids")
+    List<Similarity> findByEventIds(@Param("ids") Collection<Long> eventIds);
 
     Optional<Similarity> findByEvent1AndEvent2(Long event1, Long event2);
 }

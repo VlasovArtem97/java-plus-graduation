@@ -48,7 +48,6 @@ public class AnalyzerClient {
         return asStream(client.getInteractionsCount(request));
     }
 
-    // Утилитный метод для превращения итератора gRPC-стрима в Java Stream
     private <T> Stream<T> asStream(Iterator<T> iterator) {
         return StreamSupport.stream(
                 Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED),

@@ -55,7 +55,7 @@ public interface EventRepository extends JpaRepository<Event, Long>, QuerydslPre
         static BooleanBuilder build(EventAdminParamDto eventParamDto) {
             QEvent qEvent = QEvent.event;
             BooleanBuilder booleanBuilder = new BooleanBuilder();
-//
+
             if (eventParamDto.getUsers() != null && !eventParamDto.getUsers().isEmpty()) {
                 booleanBuilder.and(qEvent.initiator.in(eventParamDto.getUsers()));
             }

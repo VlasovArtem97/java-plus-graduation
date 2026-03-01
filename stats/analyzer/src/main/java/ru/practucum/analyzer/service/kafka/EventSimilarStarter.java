@@ -55,9 +55,9 @@ public class EventSimilarStarter {
                 consumer.commitSync();
             }
         } catch (WakeupException ignored) {
-            log.warn("consumer начинает завершать работу.");
+            log.error("Приложение завершает работу по команде Wakeup");
         } catch (Exception e) {
-            log.error("Ошибка во время обработки действий пользователей", e);
+            log.error("Ошибка во время обработки сообщений из Kafka", e);
         } finally {
             log.debug("Начинается закрытие consumer");
             consumer.close(Duration.ofSeconds(10));
@@ -66,7 +66,7 @@ public class EventSimilarStarter {
 
     @PreDestroy
     public void stop() {
-        log.info("Остановка AnalyzerStarter");
+        log.info("Остановка Analyzer(EventSimilarStarter)");
         closed.set(true);
         consumer.wakeup();
     }

@@ -11,8 +11,6 @@ import ru.practicum.main.category.model.Category;
 import ru.practicum.main.event.model.Event;
 import ru.practicum.main.event.model.Location;
 
-import java.time.LocalDateTime;
-
 @Mapper(componentModel = "spring", imports = StateEventDto.class)
 public interface EventMapper {
 

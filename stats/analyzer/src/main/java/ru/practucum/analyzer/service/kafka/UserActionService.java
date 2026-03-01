@@ -43,7 +43,7 @@ public class UserActionService {
         } else {
             log.debug("найдена запись взаимодействия пользователя с мероприятием: {}", interaction);
             Interaction oldInteraction = interaction.get();
-            if(oldInteraction.getRating() > rating) {
+            if (oldInteraction.getRating() > rating) {
                 log.warn("коэффициент нового взаимодействия ниже, чем сохраненный. Запись не обновляется");
                 return;
             }

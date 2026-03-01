@@ -66,25 +66,25 @@ public class RequestServiceImpl implements RequestService {
 
         if (!event.getRequestModeration()) {
             request.setRequestStatus(RequestStatusDto.CONFIRMED);
-            confirmedRequests ++;
+            confirmedRequests++;
         } else {
             if (event.getParticipantLimit() == 0) {
                 request.setRequestStatus(RequestStatusDto.CONFIRMED);
-                confirmedRequests ++;
+                confirmedRequests++;
             } else {
                 request.setRequestStatus(RequestStatusDto.PENDING);
             }
         }
         //Если есть одобренные заявки отправляем в event на сохранения новых данных
-        if(!event.getConfirmedRequests().equals(confirmedRequests)) {
+        if (!event.getConfirmedRequests().equals(confirmedRequests)) {
             event.setConfirmedRequests(confirmedRequests);
             eventFeignClient.updateConfirmedRequestsFromFeign(eventId, event);
         }
 
         collectorClient.collectUserAction(UserActionProto.newBuilder()
-                        .setUserId(userId)
-                        .setEventId(eventId)
-                        .setActionType(ActionTypeProto.ACTION_REGISTER)
+                .setUserId(userId)
+                .setEventId(eventId)
+                .setActionType(ActionTypeProto.ACTION_REGISTER)
                 .setTimestamp(com.google.protobuf.Timestamp.newBuilder()
                         .setSeconds(Instant.now().getEpochSecond())
                         .setNanos(Instant.now().getNano())

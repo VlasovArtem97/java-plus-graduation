@@ -37,7 +37,6 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Transactional(readOnly = true)
@@ -80,7 +79,6 @@ public class EventServiceImpl implements EventService {
     public EventFullDto findEventByIdAndEventId(Long userId, Long eventId) {
         userFeignClient.findUserById(userId);
         Event event = findEventWithOutDto(userId, eventId);
-//        List<Event> eventsWithView = getStats(List.of(event), null, null, true);
         return eventMapper.toEventFullDto(event);
     }
 
@@ -108,7 +106,6 @@ public class EventServiceImpl implements EventService {
         }
         //проверка категории и локации
         Event updateEventWithCategoryAndLocation = updateCategoryAndLocation(updateEventUserRequest, event);
-//        List<Event> eventWithView = getStats(List.of(updateEventWithCategoryAndLocation), null, null, true);
         eventMapper.toUpdateEvent(updateEventUserRequest, updateEventWithCategoryAndLocation);
         return eventMapper.toEventFullDto(eventRepository.save(updateEventWithCategoryAndLocation));
     }
@@ -156,7 +153,6 @@ public class EventServiceImpl implements EventService {
             }
         }
         Event updateEventWithCategoryAndLocation = updateCategoryAndLocation(updateEventAdminRequestDto, event);
-//        List<Event> eventWithView = getStats(List.of(updateEventWithCategoryAndLocation), null, null, true);
         eventMapper.toUpdateEvent(updateEventAdminRequestDto, updateEventWithCategoryAndLocation);
         return eventMapper.toEventFullDto(eventRepository.save(updateEventWithCategoryAndLocation));
     }
@@ -169,14 +165,12 @@ public class EventServiceImpl implements EventService {
                 eventParamDto.getSize(), Sort.by("id").ascending());
 
         List<Event> event = eventRepository.findAll(booleanBuilder, pageable).getContent();
-//        List<Event> eventWithView = getStats(event, null, null, true);
         return event.stream().map(eventMapper::toEventFullDto).toList();
     }
 
     @Override
     public List<EventShortDto> findEventByParamsPublic(EventPublicParamsDto eventPublicParamsDto,
                                                        HttpServletRequest request) {
-//        userFeignClient.findUserById(eventPublicParamsDto.getUserId());
         if (eventPublicParamsDto.getRangeEnd() != null && eventPublicParamsDto.getRangeStart() != null) {
             if (eventPublicParamsDto.getRangeEnd().isBefore(eventPublicParamsDto.getRangeStart())) {
                 throw new IllegalStateException("Дата RangeEnd не должна быть раньше даты RangeStart. RangeStart:" +
@@ -206,20 +200,6 @@ public class EventServiceImpl implements EventService {
         );
 
         List<Event> events = eventRepository.findAll(booleanBuilder, pageable).getContent();
-//        List<Event> eventsWithViews = getStats(events, null, null, true);
-//        addViewEvent(request);
-//        List<Long> ids = events.stream()
-//                .map(Event::getId)
-//                .toList();
-//        ids.forEach(id -> collectorClient.collectUserAction(UserActionProto.newBuilder()
-//                        .setEventId(id)
-//                        .setUserId(eventPublicParamsDto.getUserId())
-//                        .setActionType(ActionTypeProto.ACTION_VIEW)
-//                        .setTimestamp(com.google.protobuf.Timestamp.newBuilder()
-//                                .setSeconds(Instant.now().getEpochSecond())
-//                                .setNanos(Instant.now().getNano())
-//                                .build())
-//                .build()));
 
         return events.stream()
                 .map(eventMapper::toEventShortDto)
@@ -246,18 +226,17 @@ public class EventServiceImpl implements EventService {
         if (!event.getState().equals(StateEventDto.PUBLISHED)) {
             throw new NotFoundException("Событие не доступно. Статус события: " + event.getState());
         }
-//        List<Event> eventWithView = getStats(List.of(event), null, null, true);
-//        addViewEvent(request);
+
         collectorClient.collectUserAction(UserActionProto.newBuilder()
-                        .setEventId(eventId)
-                        .setUserId(userId)
-                        .setActionType(ActionTypeProto.ACTION_VIEW)
-                        .setTimestamp(com.google.protobuf.Timestamp.newBuilder()
-                                .setSeconds(Instant.now().getEpochSecond())
-                                .setNanos(Instant.now().getNano())
-                                .build())
+                .setEventId(eventId)
+                .setUserId(userId)
+                .setActionType(ActionTypeProto.ACTION_VIEW)
+                .setTimestamp(com.google.protobuf.Timestamp.newBuilder()
+                        .setSeconds(Instant.now().getEpochSecond())
+                        .setNanos(Instant.now().getNano())
+                        .build())
                 .build());
-        log.debug("Статичтика успешно записана");
+        log.debug("Статистика успешно записана");
         EventFullDto fullDto = eventMapper.toEventFullDto(event);
         log.debug("Возвращенный объект при запросе: {}", fullDto);
         return fullDto;
@@ -276,7 +255,6 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Events c ids - " + eventsIds + " не найдены");
         } else {
             return events;
-//            return getStats(events, null, null, true);
         }
     }
 
@@ -293,7 +271,7 @@ public class EventServiceImpl implements EventService {
                 eventId, eventFullDto);
         Event event = findEventById(eventId);
         //проверяем в полученном dto поле ConfirmedRequests
-        if(eventFullDto.getConfirmedRequests() == null || eventFullDto.getConfirmedRequests() < 0) {
+        if (eventFullDto.getConfirmedRequests() == null || eventFullDto.getConfirmedRequests() < 0) {
             log.error("В переданном объекте некорректно передано поле \"ConfirmedRequests\". {}", eventFullDto);
             throw new ConflictException("В переданном объекте некорректно передано поле \"ConfirmedRequests\". " +
                     eventFullDto);
@@ -312,7 +290,7 @@ public class EventServiceImpl implements EventService {
                         RecommendedEventProto::getEventId,
                         proto -> (double) proto.getScore()));
 
-        if(mapRecommendation.isEmpty()) {
+        if (mapRecommendation.isEmpty()) {
             log.debug("отсутствуют рекомендации для пользователя с id: [ {} ]", userId);
             return List.of();
         }
@@ -323,47 +301,10 @@ public class EventServiceImpl implements EventService {
                 .map(event -> {
                     event.setRating(mapRecommendation.getOrDefault(event.getId(), 0.0));
                     return eventMapper.toEventShortDto(event);
-        })
+                })
                 .sorted(Comparator.comparingDouble(EventShortDto::getRating).reversed())
                 .toList();
         log.debug("Рекомендованные мероприятия: {}", eventShortDtos);
         return eventShortDtos;
     }
-
-    //Добавил в параметры: время и уникальность. "Если проект будет расширяться"
-//    private List<Event> getStats(List<Event> events, LocalDateTime start, LocalDateTime end, Boolean unique) {
-//        Map<Long, String> eventsUri = events.stream()
-//                .collect(Collectors.toMap(
-//                        Event::getId,
-//                        e -> "/events/" + e.getId()
-//                ));
-//        LocalDateTime rangeStart = Objects.requireNonNullElseGet(start, () ->
-//                LocalDateTime.of(2025, 1, 1, 1, 1, 1));
-//        LocalDateTime rangeEnd = Objects.requireNonNullElseGet(end, () ->
-//                LocalDateTime.of(2050, 1, 1, 1, 1, 1));
-//        Boolean uni = Objects.requireNonNullElseGet(unique, () -> false);
-//
-//        List<StatDto> statDtos = statsClient.getStats(rangeStart, rangeEnd, eventsUri.values().stream().toList(), uni);
-//
-//        Map<Long, StatDto> statDtoMap = statDtos.stream()
-//                .filter(stat -> stat.getUri()
-//                        .substring(stat.getUri().lastIndexOf("/") + 1).matches("\\d+"))
-//                .collect(Collectors.toMap(
-//                        stat -> Long.parseLong(stat.getUri().substring(stat.getUri().lastIndexOf("/") + 1)),
-//                        stat -> stat
-//                ));
-//        for (Event event : events) {
-//            StatDto view = statDtoMap.get(event.getId());
-//            event.setViews(view != null ? view.getHits() : 0L);
-//        }
-//        return List.copyOf(events);
-//    }
-
-//    private void addViewEvent(HttpServletRequest httpServletRequest) {
-//        statsClient.addHit(HitDto.builder()
-//                .app("ewm-main-service")
-//                .uri(httpServletRequest.getRequestURI())
-//                .ip(httpServletRequest.getRemoteAddr())
-//                .build());
-//    }
 }

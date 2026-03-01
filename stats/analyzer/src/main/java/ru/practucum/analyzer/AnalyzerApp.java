@@ -19,7 +19,6 @@ public class AnalyzerApp {
         userActionsThread.setName("UserActionHandlerThread");
         userActionsThread.start();
 
-        // В текущем потоке начинаем обработку сходств
         eventSimilarStarter.start();
     }
 }
