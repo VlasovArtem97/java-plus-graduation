@@ -176,7 +176,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> findEventByParamsPublic(EventPublicParamsDto eventPublicParamsDto,
                                                        HttpServletRequest request) {
-        userFeignClient.findUserById(eventPublicParamsDto.getUserId());
+//        userFeignClient.findUserById(eventPublicParamsDto.getUserId());
         if (eventPublicParamsDto.getRangeEnd() != null && eventPublicParamsDto.getRangeStart() != null) {
             if (eventPublicParamsDto.getRangeEnd().isBefore(eventPublicParamsDto.getRangeStart())) {
                 throw new IllegalStateException("Дата RangeEnd не должна быть раньше даты RangeStart. RangeStart:" +
@@ -208,18 +208,18 @@ public class EventServiceImpl implements EventService {
         List<Event> events = eventRepository.findAll(booleanBuilder, pageable).getContent();
 //        List<Event> eventsWithViews = getStats(events, null, null, true);
 //        addViewEvent(request);
-        List<Long> ids = events.stream()
-                .map(Event::getId)
-                .toList();
-        ids.forEach(id -> collectorClient.collectUserAction(UserActionProto.newBuilder()
-                        .setEventId(id)
-                        .setUserId(eventPublicParamsDto.getUserId())
-                        .setActionType(ActionTypeProto.ACTION_VIEW)
-                        .setTimestamp(com.google.protobuf.Timestamp.newBuilder()
-                                .setSeconds(Instant.now().getEpochSecond())
-                                .setNanos(Instant.now().getNano())
-                                .build())
-                .build()));
+//        List<Long> ids = events.stream()
+//                .map(Event::getId)
+//                .toList();
+//        ids.forEach(id -> collectorClient.collectUserAction(UserActionProto.newBuilder()
+//                        .setEventId(id)
+//                        .setUserId(eventPublicParamsDto.getUserId())
+//                        .setActionType(ActionTypeProto.ACTION_VIEW)
+//                        .setTimestamp(com.google.protobuf.Timestamp.newBuilder()
+//                                .setSeconds(Instant.now().getEpochSecond())
+//                                .setNanos(Instant.now().getNano())
+//                                .build())
+//                .build()));
 
         return events.stream()
                 .map(eventMapper::toEventShortDto)
@@ -240,14 +240,27 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventFullDto findPublicEventById(Long eventId, HttpServletRequest request) {
+    public EventFullDto findPublicEventById(Long userId, Long eventId, HttpServletRequest request) {
+        userFeignClient.findUserById(userId);
         Event event = findEventById(eventId);
         if (!event.getState().equals(StateEventDto.PUBLISHED)) {
             throw new NotFoundException("Событие не доступно. Статус события: " + event.getState());
         }
 //        List<Event> eventWithView = getStats(List.of(event), null, null, true);
 //        addViewEvent(request);
-        return eventMapper.toEventFullDto(event);
+        collectorClient.collectUserAction(UserActionProto.newBuilder()
+                        .setEventId(eventId)
+                        .setUserId(userId)
+                        .setActionType(ActionTypeProto.ACTION_VIEW)
+                        .setTimestamp(com.google.protobuf.Timestamp.newBuilder()
+                                .setSeconds(Instant.now().getEpochSecond())
+                                .setNanos(Instant.now().getNano())
+                                .build())
+                .build());
+        log.debug("Статичтика успешно записана");
+        EventFullDto fullDto = eventMapper.toEventFullDto(event);
+        log.debug("Возвращенный объект при запросе: {}", fullDto);
+        return fullDto;
     }
 
     @Override

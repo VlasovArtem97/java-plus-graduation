@@ -36,7 +36,6 @@ public class PublicEventController {
                                                        @RequestParam(required = false) String sort,
                                                        @RequestParam(defaultValue = "0") int from,
                                                        @RequestParam(defaultValue = "10") int size,
-                                                       @Positive @NotNull @RequestHeader("X-EWM-USER-ID") long userId,
                                                        HttpServletRequest request) {
         SortForParamPublicEventDto sortParam = SortForParamPublicEventDto.from(sort).orElse(null);
         return eventService.findEventByParamsPublic(EventPublicParamsDto.builder()
@@ -49,14 +48,14 @@ public class PublicEventController {
                 .sort(sortParam)
                 .from(from)
                 .size(size)
-                        .userId(userId)
                 .build(), request);
     }
 
     @GetMapping("/{eventId}")
-    public EventFullDto findPublicEventById(@PathVariable @Positive @NotNull Long eventId,
+    public EventFullDto findPublicEventById(@Positive @NotNull @RequestHeader("X-EWM-USER-ID") Long userId,
+                                            @PathVariable @Positive @NotNull Long eventId,
                                             HttpServletRequest request) {
-        return eventService.findPublicEventById(eventId, request);
+        return eventService.findPublicEventById(userId, eventId, request);
     }
 
     @GetMapping("/recommendations")
