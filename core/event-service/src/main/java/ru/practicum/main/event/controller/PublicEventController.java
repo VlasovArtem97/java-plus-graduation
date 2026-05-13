@@ -12,6 +12,7 @@ import ru.practicum.interaction.dto.event.EventPublicParamsDto;
 import ru.practicum.interaction.dto.event.EventShortDto;
 import ru.practicum.interaction.dto.event.enums.SortForParamPublicEventDto;
 import ru.practicum.main.event.service.EventService;
+import ru.practicum.main.event.service.EventWithRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +24,9 @@ import java.util.List;
 public class PublicEventController {
 
     private final EventService eventService;
+    private final EventWithRequest eventWithRequest;
+
+    public static final String HEADER_USER_ID = "X-EWM-USER-ID";
 
     @GetMapping
     public List<EventShortDto> findEventByParamsPublic(@RequestParam(required = false) String text,
@@ -50,8 +54,22 @@ public class PublicEventController {
     }
 
     @GetMapping("/{eventId}")
-    public EventFullDto findPublicEventById(@PathVariable @Positive @NotNull Long eventId,
+    public EventFullDto findPublicEventById(@Positive @NotNull @RequestHeader(HEADER_USER_ID) Long userId,
+                                            @PathVariable @Positive @NotNull Long eventId,
                                             HttpServletRequest request) {
-        return eventService.findPublicEventById(eventId, request);
+        return eventService.findPublicEventById(userId, eventId, request);
+    }
+
+    @GetMapping("/recommendations")
+    List<EventShortDto> getRecommendations(@Positive @NotNull @RequestHeader(HEADER_USER_ID) Long userId,
+                                           @Positive @RequestParam(defaultValue = "10") int size) {
+        return eventService.getRecommendations(userId, size);
+    }
+
+    @PutMapping("/{eventId}/like")
+    public void likeEvent(
+            @Positive @NotNull @PathVariable Long eventId,
+            @Positive @NotNull @RequestHeader(HEADER_USER_ID) Long userId) {
+        eventWithRequest.likeEvent(eventId, userId);
     }
 }

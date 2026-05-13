@@ -24,7 +24,7 @@ public interface EventService {
 
     List<EventShortDto> findEventByParamsPublic(EventPublicParamsDto eventPublicParamsDto, HttpServletRequest request);
 
-    EventFullDto findPublicEventById(Long eventId, HttpServletRequest request);
+    EventFullDto findPublicEventById(Long userId, Long eventId, HttpServletRequest request);
 
     Event findEventWithOutDto(Long userId, Long eventId);
 
@@ -35,4 +35,6 @@ public interface EventService {
     EventFullDto findEventByIdForFeign(Long eventId);
 
     void updateConfirmedRequestsFromFeign(Long eventId, EventFullDto eventFullDto);
+
+    List<EventShortDto> getRecommendations(Long userId, int size);
 }

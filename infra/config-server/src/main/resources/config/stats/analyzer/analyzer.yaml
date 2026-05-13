@@ -1,0 +1,51 @@
+server:
+  port: 0
+
+kafka:
+  port: localhost:9092
+  topicAction: stats.user-actions.v1
+  topicEventsSimilarity: stats.events-similarity.v1
+  consumerClientIdForAnalyzerUserAction: analyzer-consumer-client-1
+  consumerClientIdForAnalyzerEventSimilar: analyzer-consumer-client-2
+  consumerGroupIdForAnalyzer: analyzer-group-1
+
+spring:
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:6542/stats_analyzer_service
+    username: ewm
+    password: ewm
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+    show_sql: true
+  sql:
+    init:
+      mode: always
+
+grpc:
+  server:
+    port: 0
+
+logging:
+  level:
+    ru.practucum.analyzer: DEBUG
+    org.apache.kafka: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  #  Влияние kafka на основной сервис (если кафка упадет, то и все приложение также упадет)
+  health:
+    kafka:
+      enabled: true
+  # Показывает расширенный вариант статуса сервиса(сервис + kafka)
+  endpoint:
+    health:
+      show-details: always
+      # Чтобы статус Кафки влиял на общий статус сервиса

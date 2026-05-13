@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+import "stats/messages/user_action.proto";
+import "google/protobuf/empty.proto";
+
+package stats.service.collector;
+
+option java_multiple_files = true;
+option java_package = "ru.practicum.ewm.stats.proto.services";
+
+service UserActionController {
+  rpc CollectUserAction (stats.messages.UserActionProto)
+    returns (google.protobuf.Empty);
+}

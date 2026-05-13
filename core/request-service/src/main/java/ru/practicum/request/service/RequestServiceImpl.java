@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.stats.proto.messages.ActionTypeProto;
+import ru.practicum.ewm.stats.proto.messages.UserActionProto;
 import ru.practicum.interaction.dto.event.EventFullDto;
 import ru.practicum.interaction.dto.event.enums.StateEventDto;
 import ru.practicum.interaction.dto.request.RequestDTO;
@@ -16,7 +18,9 @@ import ru.practicum.interaction.feignclient.UserFeignClient;
 import ru.practicum.request.mapper.RequestMapper;
 import ru.practicum.request.model.Request;
 import ru.practicum.request.repository.RequestRepository;
+import ru.practicum.statsclient.CollectorClient;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -32,6 +36,7 @@ public class RequestServiceImpl implements RequestService {
     private final UserFeignClient userFeignClient;
     private final EventFeignClient eventFeignClient;
     private final RequestMapper requestMapper;
+    private final CollectorClient collectorClient;
 
     @Transactional
     @Override
@@ -61,21 +66,30 @@ public class RequestServiceImpl implements RequestService {
 
         if (!event.getRequestModeration()) {
             request.setRequestStatus(RequestStatusDto.CONFIRMED);
-            confirmedRequests ++;
+            confirmedRequests++;
         } else {
             if (event.getParticipantLimit() == 0) {
                 request.setRequestStatus(RequestStatusDto.CONFIRMED);
-                confirmedRequests ++;
+                confirmedRequests++;
             } else {
                 request.setRequestStatus(RequestStatusDto.PENDING);
             }
         }
         //Если есть одобренные заявки отправляем в event на сохранения новых данных
-        if(!event.getConfirmedRequests().equals(confirmedRequests)) {
+        if (!event.getConfirmedRequests().equals(confirmedRequests)) {
             event.setConfirmedRequests(confirmedRequests);
             eventFeignClient.updateConfirmedRequestsFromFeign(eventId, event);
         }
 
+        collectorClient.collectUserAction(UserActionProto.newBuilder()
+                .setUserId(userId)
+                .setEventId(eventId)
+                .setActionType(ActionTypeProto.ACTION_REGISTER)
+                .setTimestamp(com.google.protobuf.Timestamp.newBuilder()
+                        .setSeconds(Instant.now().getEpochSecond())
+                        .setNanos(Instant.now().getNano())
+                        .build())
+                .build());
         return requestMapper.toRequestDTO(requestRepository.save(request));
     }
 

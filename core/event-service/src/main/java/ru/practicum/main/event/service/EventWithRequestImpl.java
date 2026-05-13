@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.stats.proto.messages.ActionTypeProto;
+import ru.practicum.ewm.stats.proto.messages.UserActionProto;
 import ru.practicum.interaction.dto.event.EventRequestStatusUpdateRequest;
 import ru.practicum.interaction.dto.event.EventRequestStatusUpdateResult;
 import ru.practicum.interaction.dto.request.RequestDTO;
@@ -12,7 +14,9 @@ import ru.practicum.interaction.error.ConflictException;
 import ru.practicum.interaction.feignclient.RequestFeignClient;
 import ru.practicum.interaction.feignclient.UserFeignClient;
 import ru.practicum.main.event.model.Event;
+import ru.practicum.statsclient.CollectorClient;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -26,6 +30,7 @@ public class EventWithRequestImpl implements EventWithRequest {
     private final EventService eventService;
     private final UserFeignClient userFeignClient;
     private final RequestFeignClient requestFeignClient;
+    private final CollectorClient collectorClient;
 
     @Transactional
     @Override
@@ -99,5 +104,33 @@ public class EventWithRequestImpl implements EventWithRequest {
         userFeignClient.findUserById(userId);
         eventService.findEventWithOutDto(userId, eventId);
         return requestFeignClient.findRequestByEventId(eventId);
+    }
+
+    @Override
+    public void likeEvent(Long eventId, Long userId) {
+        userFeignClient.findUserById(userId);
+        eventService.findEventById(eventId);
+        List<RequestDTO> list = requestFeignClient.findRequestByEventId(eventId);
+
+        RequestDTO dto = list.stream()
+                .filter(request -> request.getRequesterId().equals(userId))
+                .filter(request -> request.getRequestStatus().equals(RequestStatusDto.CONFIRMED))
+                .findFirst()
+                .orElseThrow(() -> {
+                    log.error("Пользователь с id: [ {} ] не посещал мероприятие с id: [ {} ]", userId, eventId);
+                    return new IllegalStateException("Пользователь с id : [" + userId + "] не посещал мероприятие с " +
+                            "id: [" + eventId + "]");
+                });
+
+        collectorClient.collectUserAction(UserActionProto.newBuilder()
+                .setEventId(eventId)
+                .setUserId(userId)
+                .setActionType(ActionTypeProto.ACTION_LIKE)
+                .setTimestamp(com.google.protobuf.Timestamp.newBuilder()
+                        .setSeconds(Instant.now().getEpochSecond())
+                        .setNanos(Instant.now().getNano())
+                        .build())
+                .build());
+        log.debug("Лайк успешно поставлен");
     }
 }

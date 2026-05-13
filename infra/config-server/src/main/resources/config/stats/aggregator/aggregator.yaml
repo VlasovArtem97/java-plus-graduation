@@ -1,0 +1,29 @@
+server:
+  port: 0
+
+kafka:
+  port: localhost:9092
+  topicAction: stats.user-actions.v1
+  topicEventsSimilarity: stats.events-similarity.v1
+  consumerClientIdForAggregator: aggregator-consumer-client-1
+  consumerGroupIdForAggregator: aggregator-group-1
+
+logging:
+  level:
+    ru.practicum.aggregator: DEBUG
+    org.apache.kafka: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  #  Влияние kafka на основной сервис (если кафка упадет, то и все приложение также упадет)
+  health:
+    kafka:
+      enabled: true
+  # Показывает расширенный вариант статуса сервиса(сервис + kafka)
+  endpoint:
+    health:
+      show-details: always
+      # Чтобы статус Кафки влиял на общий статус сервиса

@@ -18,5 +18,5 @@ public interface EventFeignClient {
 
     @PatchMapping("/updateConfirmedRequests/{eventId}")
     void updateConfirmedRequestsFromFeign(@PathVariable("eventId") @Positive @NotNull Long eventId,
-                          @NotNull @RequestBody EventFullDto eventFullDto);
+                                          @NotNull @RequestBody EventFullDto eventFullDto);
 }

@@ -11,4 +11,6 @@ public interface EventWithRequest {
     EventRequestStatusUpdateResult updateRequestUser(Long userId, Long eventId, EventRequestStatusUpdateRequest request);
 
     List<RequestDTO> getEventRequest(Long userId, Long eventId);
+
+    void likeEvent(Long eventId, Long userId);
 }
